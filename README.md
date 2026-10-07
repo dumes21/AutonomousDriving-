@@ -3,6 +3,7 @@
 We train a small car to drive around a track with DQN (Stable-Baselines3),
 first in our own fast 2D simulator, then on a real JetRacer.
 Current scope: **Level 1 only** (lane following).
+Prior art: [masato-ka/airc-rl-agent](https://github.com/masato-ka/airc-rl-agent) (not used here).
 
 ## Layout
 
@@ -12,7 +13,6 @@ sim/demo.py             watch the sim, or benchmark its speed
 tests/test_track_env.py tests for the sim
 car/drive_test.py       runs ON the JetRacer: steering sweep + short drive
 car/camera_test.py      runs ON the JetRacer: camera fps check + save images
-airc-rl-agent/          upstream reference code, we are NOT building on it
 PROJECT_PLAN.md         the project plan
 ```
 
