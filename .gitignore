@@ -1,7 +1,10 @@
 venv/
-venv/
 __pycache__/
 *.pyc
 *.egg-info/
-data/
 *.zip
+.DS_Store
+logs/
+model_log/
+videos/
+data/
