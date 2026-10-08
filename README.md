@@ -10,6 +10,7 @@ Prior art: [masato-ka/airc-rl-agent](https://github.com/masato-ka/airc-rl-agent)
 ```
 sim/track_env.py        the simulator (gymnasium env "JetRacerEnv")
 sim/demo.py             watch the sim, or benchmark its speed
+sim/train.py            train DQN, compare with baselines
 tests/test_track_env.py tests for the sim
 car/drive_test.py       runs ON the JetRacer: steering sweep + short drive
 car/camera_test.py      runs ON the JetRacer: camera fps check + save images
@@ -23,6 +24,7 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python sim/demo.py               # pygame window, random actions
 python sim/demo.py --benchmark   # 100k random steps, prints steps/sec
+python sim/train.py --seed 0     # train DQN (300k steps, ~5 min), prints a results table
 pytest                           # run the tests
 ```
 
