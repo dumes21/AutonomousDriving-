@@ -13,7 +13,10 @@ from learning_racer.utils.logger import get_logger, teardown_exception_wrapper
 
 # gym regitration
 from learning_racer.robot import JetbotEnv, JetRacerEnv
-import gym_donkeycar
+try:
+    import gym_donkeycar  # Only needed for the simulator (-robot sim).
+except ImportError:
+    gym_donkeycar = None
 
 logger = get_logger(__name__)
 

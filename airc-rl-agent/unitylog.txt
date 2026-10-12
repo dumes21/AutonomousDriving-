@@ -10,30 +10,36 @@ Direct3D:
     VRAM:     1906 MB
     Driver:   32.0.15.9227
 Begin MonoManager ReloadAssembly
-- Completed reload, in  0.643 seconds
+- Completed reload, in  0.102 seconds
 <RI> Initializing input.
 XInput1_3.dll not found. Trying XInput9_1_0.dll instead...
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 3.324000 ms
+UnloadTime: 0.718800 ms
 SDSandbox Server starting.
-SocketException: Address already in use
-  at System.Net.Sockets.Socket.Bind (System.Net.EndPoint localEP) [0x00043] in <0306c7fe0af44cadbd08d1c628fe991d>:0 
-  at tk.TcpServer.Bind (System.String ip, System.Int32 port) [0x00022] in <a2c5c2f6c1574e1c839a565864375303>:0 
-  at tk.TcpServer.Run (System.String ip, System.Int32 port) [0x00000] in <a2c5c2f6c1574e1c839a565864375303>:0 
-  at SandboxServer.Start () [0x0005e] in <a2c5c2f6c1574e1c839a565864375303>:0 
-
+Server Listening on: 0.0.0.0:9091
+Waiting for a connection...
 SDSandbox Server starting.
-SocketException: Address already in use
-  at System.Net.Sockets.Socket.Bind (System.Net.EndPoint localEP) [0x00043] in <0306c7fe0af44cadbd08d1c628fe991d>:0 
-  at tk.TcpServer.Bind (System.String ip, System.Int32 port) [0x00022] in <a2c5c2f6c1574e1c839a565864375303>:0 
-  at tk.TcpServer.Run (System.String ip, System.Int32 port) [0x00000] in <a2c5c2f6c1574e1c839a565864375303>:0 
-  at SandboxServer.Start () [0x0005e] in <a2c5c2f6c1574e1c839a565864375303>:0 
-
+Server Listening on: 0.0.0.0:9092
+Waiting for a connection...
 Setting up 4 worker threads for Enlighten.
-  Thread -> id: 3458 -> priority: 1 
-  Thread -> id: 8a8 -> priority: 1 
-  Thread -> id: 7134 -> priority: 1 
-  Thread -> id: 4d8c -> priority: 1 
-Server stopped.
-Server stopped.
+  Thread -> id: 6804 -> priority: 1 
+  Thread -> id: 5d44 -> priority: 1 
+  Thread -> id: 1bec -> priority: 1 
+  Thread -> id: 267c -> priority: 1 
+Waiting for a connection...
+client connected.
+generated_track
+loaded scene
+Unloading 8 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 5.734100 ms
+JustOne removing instance.MainThDisp
+JustOne removing instance.SandboxServer
+loading: racePi2
+JustOne removing instance.SandboxPrivateAPIServer
+Added timer
+car loaded.
+
+Unloading 34 unused Assets to reduce memory usage. Loaded Objects now: 5405.
+Total: 1.698500 ms (FindLiveObjects: 0.227300 ms CreateObjectMapping: 0.126200 ms MarkObjects: 1.283000 ms  DeleteObjects: 0.061500 ms)
+

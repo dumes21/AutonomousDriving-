@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Read(//c/Users/Owner/Downloads/DonkeySimWin//**)",
+      "Bash(/c/Users/Owner/anaconda3/envs/racer/python.exe -c ' *)",
+      "Read(//c/Users/Owner/Desktop/Augustus Amedume Comp Sci Degree/Augustus Amedume Year 4 Computer Science/Semester 2/Reinforement Learning/Assignments/Ass_3//**)",
+      "Read(//c/Users/Owner/Desktop/Augustus Amedume Comp Sci Degree/Augustus Amedume Year 4 Computer Science/Semester 2/Reinforement Learning/Assignments/Ass_3/airc-rl-agent/**)",
+      "PowerShell($sp = \"C:\\\\Users\\\\Owner\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Owner-Desktop-Augustus-Amedume-Comp-Sci-Degree-Augustus-Amedume-Year-4-Computer-Science-Semester-2-Reinforement-Learning-Assignments-Ass-3-AutonomousDriving-\\\\02a086a0-29bd-4925-9d7f-5f5e6ca61ab1\\\\scratchpad\"; $repo = \"C:\\\\Users\\\\Owner\\\\Desktop\\\\Augustus Amedume Comp Sci Degree\\\\Augustus Amedume Year 4 Computer Science\\\\Semester 2\\\\Reinforement Learning\\\\Assignments\\\\Ass_3\\\\AutonomousDriving-\\\\airc-rl-agent\"; & \"C:\\\\Users\\\\Owner\\\\anaconda3\\\\envs\\\\racer\\\\python.exe\" \"$sp\\\\check_sim_vae.py\" $repo \"$sp\\\\sim_vae_check.png\")",
+      "PowerShell(Get-Process racer, python, donkey_sim -ErrorAction SilentlyContinue | Select-Object Name, Id, @{n='CPU_s';e={[math]::Round\\($_.CPU,1\\)}}, @{n='MB';e={[math]::Round\\($_.WorkingSet64/1MB\\)}}, Responding, StartTime | Format-Table -AutoSize; Start-Sleep -Seconds 5; Get-Process racer, python, donkey_sim -ErrorAction SilentlyContinue | Select-Object Name, Id, @{n='CPU_s';e={[math]::Round\\($_.CPU,1\\)}} | Format-Table -AutoSize; Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Desktop\\\\Augustus Amedume Comp Sci Degree\\\\Augustus Amedume Year 4 Computer Science\\\\Semester 2\\\\Reinforement Learning\\\\Assignments\\\\Ass_3\\\\AutonomousDriving-\\\\airc-rl-agent\\\\model_log_smoke\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Id 25248, 10860, 20908 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process racer, donkey_sim -ErrorAction SilentlyContinue)",
+      "Bash(/c/Users/Owner/anaconda3/envs/racer/Scripts/racer.exe train *)",
+      "PowerShell($a = Get-Process racer, python, donkey_sim -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-30\\) } | Select-Object Name, Id, CPU, Responding, StartTime; $a | Format-Table -AutoSize; Start-Sleep -Seconds 5; Get-Process -Id \\($a.Id\\) -ErrorAction SilentlyContinue | Select-Object Name, Id, CPU | Format-Table -AutoSize; Get-Date)"
+    ]
+  }
+}
