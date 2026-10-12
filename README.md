@@ -14,6 +14,10 @@ sim/train.py            train DQN, compare with baselines
 tests/test_track_env.py tests for the sim
 car/drive_test.py       runs ON the JetRacer: steering sweep + short drive
 car/camera_test.py      runs ON the JetRacer: camera fps check + save images
+car/teleop_record.py    runs ON the JetRacer: keyboard driving + recording training data
+car/drive_model.py      runs ON the JetRacer: drive with a trained steering model
+train/inspect_data.py   check a recorded session (stats, histogram, sample frames)
+train/train_bc.py       train ResNet18 to copy the human's steering (imitation learning)
 PROJECT_PLAN.md         the project plan
 ```
 
@@ -44,3 +48,15 @@ python3 car/camera_test.py --show               # also show a window
 
 These scripts only need numpy, opencv, `jetracer` and `jetcam`. They do not
 import anything from `sim/`.
+
+## Imitation learning (drive by hand, then copy the driver)
+
+```
+python3 car/teleop_record.py                 # ON the car, over SSH. A/D steer, W/S throttle, R record, Q quit
+python train/inspect_data.py data/<session>  # laptop: copy data/<session> over first, check the plots in logs/
+python train/train_bc.py data/<session> [more sessions] [--flip]   # saves model_log/bc/best.pt
+python3 car/drive_model.py best.pt           # ON the car: copy best.pt over; wheels up for the first run, X stops
+```
+
+`train_bc.py --limit 200 --epochs 2` is a quick smoke test. The car scripts cap throttle (0.3 by default,
+refuse > 0.6) and always set throttle to 0 on exit.
