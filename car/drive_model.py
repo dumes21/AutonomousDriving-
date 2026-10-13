@@ -1,10 +1,18 @@
 """Drive the JetRacer with a trained steering model (run ON the car, Python 3.6).
 
 camera -> crop/resize -> ResNet18 -> steering, at a fixed, capped throttle.
-Press X (or Ctrl-C) to stop. The car also stops if the camera or model fails.
 
-    python3 car/drive_model.py model_log/bc/best.pt
+DEADMAN: the car only gets throttle while you HOLD the W key (key repeat). If
+no W arrives for 0.5 s throttle drops to 0 (steering keeps following the model)
+and you must hold W again. Press X (or Ctrl-C) to stop completely. The car also
+stops if the camera or model fails, and on SIGTERM / SIGHUP (e.g. the SSH
+connection drops). This script needs a real terminal for the W key.
+
+    python3 car/drive_model.py model_log/bc/best.pt --invert-steering --invert-throttle
     python3 car/drive_model.py best.pt --throttle 0.25 --smooth 0.6
+
+Tip: set a short key-repeat delay on your laptop, otherwise the deadman can
+trip between the first W press and the repeat starting.
 
 FIRST RUN: put the car on a stand with the wheels off the ground and check
 that the steering turns towards what the camera sees.
@@ -45,6 +53,10 @@ def parse_args():
     p.add_argument("--smooth", type=float, default=0.5,
                    help="weight of the NEW prediction, 0..1 (1 = no smoothing, default 0.5)")
     p.add_argument("--invert-steering", action="store_true", help="flip the sign of the model output")
+    p.add_argument("--invert-throttle", action="store_true",
+                   help="send the NEGATED throttle to the car (use if forward needs a negative value)")
+    p.add_argument("--deadman", type=float, default=0.5,
+                   help="seconds without a W key press before throttle is set to 0 (default 0.5)")
     p.add_argument("--steering-gain", type=float, default=None, help="leave unset to keep the library default")
     p.add_argument("--steering-offset", type=float, default=None, help="leave unset to keep the library default")
     p.add_argument("--throttle-gain", type=float, default=None, help="leave unset to keep the library default")
@@ -55,6 +67,8 @@ def parse_args():
         p.error("--throttle must be in (0, {}], got {}".format(HARD_LIMIT, args.throttle))
     if not 0.0 < args.smooth <= 1.0:
         p.error("--smooth must be in (0, 1]")
+    if args.deadman <= 0:
+        p.error("--deadman must be > 0")
     return args
 
 
@@ -77,16 +91,41 @@ def preprocess(bgr, ckpt, device):
     return x.to(device)
 
 
-def key_pressed(char):
-    """True if `char` was typed (non-blocking). Needs the terminal in cbreak mode."""
+def read_keys():
+    """Return the (lower-case) keys typed since the last call. Non-blocking; needs cbreak mode."""
+    keys = []
     while select.select([sys.stdin], [], [], 0)[0]:
-        if sys.stdin.read(1).lower() == char:
-            return True
-    return False
+        ch = sys.stdin.read(1)
+        if ch == "":  # EOF: the terminal went away
+            keys.append("EOF")
+            break
+        keys.append(ch.lower())
+    return keys
+
+
+def throttle_for_car(forward, cap, invert):
+    """forward is 0..cap (positive = forward). Returns the value sent to car.throttle.
+    The cap applies to the absolute value, so nothing exceeds it in either direction."""
+    value = max(0.0, min(cap, forward))
+    return -value if (invert and value > 0) else value  # avoid sending -0.0
+
+
+def stop_car(car):
+    """Throttle and steering to 0. Tries twice in case the first write fails."""
+    for _ in range(2):
+        try:
+            car.throttle = 0.0
+            car.steering = 0.0
+            return
+        except Exception as e:
+            print("WARNING: failed to stop the car: {}".format(e))
 
 
 def main():
     args = parse_args()
+    if not sys.stdin.isatty():
+        print("ERROR: run this from a real terminal (e.g. SSH). The W-key deadman needs keyboard input.")
+        sys.exit(1)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Loading model on {} ...".format(device))
     model, ckpt = load_model(args.model, device)
@@ -94,15 +133,21 @@ def main():
 
     print("=" * 60)
     print("FIRST RUN: LIFT THE WHEELS OFF THE GROUND.")
-    print("Press X (or Ctrl-C) at any time to stop. Starting in 5 s.")
+    print("HOLD W to drive (deadman: {} s without W = throttle 0). X or Ctrl-C stops.".format(args.deadman))
+    print("Starting in 5 s.")
     print("=" * 60)
     time.sleep(5)
 
-    signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(1))  # so finally still runs
     car = NvidiaRacecar()
     camera = None
-    use_keys = sys.stdin.isatty()
-    old_tty = termios.tcgetattr(sys.stdin) if use_keys else None
+    old_tty = termios.tcgetattr(sys.stdin)
+
+    def stop_and_exit(signum, frame):
+        stop_car(car)  # zero everything first, then leave (the finally block below also runs)
+        sys.exit(1)
+
+    signal.signal(signal.SIGTERM, stop_and_exit)
+    signal.signal(signal.SIGHUP, stop_and_exit)  # e.g. the SSH connection dropped
     try:
         car.throttle = 0.0
         if args.steering_gain is not None:
@@ -113,6 +158,8 @@ def main():
             car.throttle_gain = args.throttle_gain
         print("In use: steering_gain={} steering_offset={} throttle_gain={}".format(
             car.steering_gain, car.steering_offset, car.throttle_gain))
+        print("Throttle {} (hard limit {}), invert_throttle={}, invert_steering={}".format(
+            args.throttle, HARD_LIMIT, args.invert_throttle, args.invert_steering))
 
         camera = CSICamera(width=320, height=240,
                            capture_width=args.capture_width, capture_height=args.capture_height,
@@ -120,20 +167,21 @@ def main():
         # Warm-up: the first inference is slow (GPU init). Do it before the wheels turn.
         with torch.no_grad():
             model(preprocess(camera.read(), ckpt, device))
-        if use_keys:
-            tty.setcbreak(sys.stdin.fileno())  # read keys without waiting for Enter
-        else:
-            print("(stdin is not a terminal: the X key is disabled, use Ctrl-C)")
+        tty.setcbreak(sys.stdin.fileno())  # read keys without waiting for Enter
 
-        print("Driving at throttle {}. Press X to stop.".format(args.throttle))
+        print("Ready. Hold W to drive, X to stop.")
         sign = -1.0 if args.invert_steering else 1.0
         steering = 0.0
+        last_w_time = 0.0  # when W last arrived (deadman)
         frames, t_fps = 0, time.time()
-        car.throttle = args.throttle
         while True:
-            if use_keys and key_pressed("x"):
-                print("\r\nX pressed, stopping.")
-                break
+            for key in read_keys():
+                if key == "x" or key == "EOF":
+                    print("\r\nStopping ({}).".format("X pressed" if key == "x" else "terminal closed"))
+                    return
+                if key == "w":
+                    last_w_time = time.time()
+
             image = camera.read()
             with torch.no_grad():
                 raw = float(model(preprocess(image, ckpt, device)).item())
@@ -143,22 +191,20 @@ def main():
             steering = args.smooth * raw + (1.0 - args.smooth) * steering  # exponential smoothing
             car.steering = steering
 
+            # Deadman: throttle only while W keeps repeating.
+            go = time.time() - last_w_time <= args.deadman
+            car.throttle = throttle_for_car(args.throttle if go else 0.0, args.throttle, args.invert_throttle)
+
             frames += 1
             if time.time() - t_fps >= 1.0:
-                print("\rfps {:5.1f}   steering {:+.2f}   ".format(frames / (time.time() - t_fps), steering))
+                print("\rfps {:5.1f}   steering {:+.2f}   {}".format(
+                    frames / (time.time() - t_fps), steering, "DRIVING" if go else "throttle 0 - hold W"))
                 frames, t_fps = 0, time.time()
     except KeyboardInterrupt:
         print("\nInterrupted.")
     finally:
-        for _ in range(2):  # try twice in case the first write fails
-            try:
-                car.throttle = 0.0
-                car.steering = 0.0
-                break
-            except Exception as e:
-                print("WARNING: failed to stop the car: {}".format(e))
-        if old_tty is not None:
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
+        stop_car(car)
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
         if camera is not None:
             try:
                 camera.cap.release()

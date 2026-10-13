@@ -52,11 +52,24 @@ import anything from `sim/`.
 ## Imitation learning (drive by hand, then copy the driver)
 
 ```
-python3 car/teleop_record.py                 # ON the car, over SSH. A/D steer, W/S throttle, R record, Q quit
-python train/inspect_data.py data/<session>  # laptop: copy data/<session> over first, check the plots in logs/
+python3 car/teleop_record.py --invert-steering --invert-throttle   # ON the car, over SSH
+python train/inspect_data.py data/<session>   # laptop: copy data/<session> over first, check the plots in logs/
 python train/train_bc.py data/<session> [more sessions] [--flip]   # saves model_log/bc/best.pt
-python3 car/drive_model.py best.pt           # ON the car: copy best.pt over; wheels up for the first run, X stops
+python3 car/drive_model.py best.pt --invert-steering --invert-throttle   # ON the car: copy best.pt over
 ```
 
-`train_bc.py --limit 200 --epochs 2` is a quick smoke test. The car scripts cap throttle (0.3 by default,
-refuse > 0.6) and always set throttle to 0 on exit.
+**Flags our car needs:** `--invert-steering --invert-throttle` on both `teleop_record.py` and `drive_model.py`
+(so A steers left and W drives forward). Use the same flags for recording and driving, otherwise the model's
+steering comes out mirrored. Check which flags you need on the stand with the wheels up first.
+
+**Keys in `teleop_record.py`:** A/D nudge the steering target by 0.1 and it stays latched, C recentres,
+W/S change throttle, SPACE stops, R toggles recording, Q quits (`--steer-mode hold` gives the old
+"steer only while the key is held" behaviour).
+
+**Safety:** throttle is capped (0.3 by default, refuses > 0.6, in both directions). There is a 0.5 s deadman:
+with no key for 0.5 s throttle drops to 0 and you press W again (in `drive_model.py` you must HOLD W to drive).
+Throttle and steering are zeroed on exit, Ctrl-C, SIGTERM and SIGHUP (e.g. the SSH connection dropping).
+Set a short key-repeat delay on your laptop so the deadman does not trip before key repeat starts.
+For the first run, lift the wheels off the ground. `X` stops `drive_model.py`.
+
+`train_bc.py --limit 200 --epochs 2` is a quick smoke test.
