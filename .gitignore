@@ -4,7 +4,8 @@ __pycache__/
 *.egg-info/
 *.zip
 .DS_Store
-logs/
 model_log/
 videos/
-data/
+data/*/discarded/
+data/*/labels_discarded.csv
+
