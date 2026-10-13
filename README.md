@@ -58,9 +58,19 @@ python train/train_bc.py data/<session> [more sessions] [--flip]   # saves model
 python3 car/drive_model.py best.pt --invert-steering --invert-throttle   # ON the car: copy best.pt over
 ```
 
-**Flags our car needs:** `--invert-steering --invert-throttle` on both `teleop_record.py` and `drive_model.py`
-(so A steers left and W drives forward). Use the same flags for recording and driving, otherwise the model's
-steering comes out mirrored. Check which flags you need on the stand with the wheels up first.
+**Our car's calibration:** steering gain **1.0**, offset **0.0**, steer limit **0.8**, plus
+`--invert-steering` and/or `--invert-throttle` if needed (A should steer left, W should drive forward;
+check on the stand with the wheels up). The scripts set gain and offset explicitly because the library's
+built-in default gain is -0.65. These are the defaults, so normally you only add the invert flags:
+
+```
+python3 car/teleop_record.py --invert-steering --invert-throttle
+python3 car/drive_model.py best.pt --invert-steering --invert-throttle
+# explicit form: --steering-gain 1.0 --steering-offset 0.0 --steer-limit 0.8
+```
+
+Use the same flags for recording and driving, otherwise the model's steering comes out mirrored or scaled
+differently. The steer limit clamps every steering command (recorded labels and model output) to +-0.8.
 
 **Keys in `teleop_record.py`:** A/D nudge the steering target by 0.1 and it stays latched, C recentres,
 W/S change throttle, SPACE stops, R toggles recording, Q quits (`--steer-mode hold` gives the old

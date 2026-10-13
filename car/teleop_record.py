@@ -77,8 +77,11 @@ def parse_args():
     p.add_argument("--deadman", type=float, default=0.5,
                    help="seconds without any key before throttle is set to 0 (default 0.5)")
     p.add_argument("--out", default=DATA_DIR, help="folder that session folders go into (default <repo>/data)")
-    p.add_argument("--steering-gain", type=float, default=None, help="leave unset to keep the library default")
-    p.add_argument("--steering-offset", type=float, default=None, help="leave unset to keep the library default")
+    p.add_argument("--steering-gain", type=float, default=1.0,
+                   help="car.steering_gain (default 1.0; the library default of -0.65 is NOT used)")
+    p.add_argument("--steering-offset", type=float, default=0.0, help="car.steering_offset (default 0.0)")
+    p.add_argument("--steer-limit", type=float, default=0.8,
+                   help="clamp every steering command to +-this value (default 0.8)")
     p.add_argument("--throttle-gain", type=float, default=None, help="leave unset to keep the library default")
     p.add_argument("--capture-width", type=int, default=1640)
     p.add_argument("--capture-height", type=int, default=1232)
@@ -87,6 +90,8 @@ def parse_args():
         p.error("--max-throttle must be in (0, {}], got {}".format(HARD_LIMIT, args.max_throttle))
     if args.deadman <= 0:
         p.error("--deadman must be > 0")
+    if not 0.0 < args.steer_limit <= 1.0:
+        p.error("--steer-limit must be in (0, 1]")
     return args
 
 
@@ -159,6 +164,7 @@ def run(stdscr, args, car, camera, recorder):
     t_prev = time.time()
     sign = -1.0 if args.invert_steering else 1.0  # A = left = -1 on the car, unless inverted
     latched = args.steer_mode == "latched"
+    lim = args.steer_limit  # every steering command stays within +-lim
 
     while True:
         # camera.read() blocks until the next frame (~30 fps), so it paces this loop too.
@@ -178,13 +184,13 @@ def run(stdscr, args, car, camera, recorder):
             key = chr(ch).lower() if 0 <= ch < 256 else ""
             if key == "a":
                 if latched:
-                    target = round(max(-1.0, min(1.0, target - sign * STEER_NUDGE)), 2)
+                    target = round(max(-lim, min(lim, target - sign * STEER_NUDGE)), 2)
                 else:
                     left_until = now + args.hold
                 last_key = "A"
             elif key == "d":
                 if latched:
-                    target = round(max(-1.0, min(1.0, target + sign * STEER_NUDGE)), 2)
+                    target = round(max(-lim, min(lim, target + sign * STEER_NUDGE)), 2)
                 else:
                     right_until = now + args.hold
                 last_key = "D"
@@ -217,14 +223,14 @@ def run(stdscr, args, car, camera, recorder):
         # --- steering: ramp towards the target ---
         if not latched:
             if now < left_until and now >= right_until:
-                target = -1.0 * sign
+                target = -lim * sign
             elif now < right_until and now >= left_until:
-                target = 1.0 * sign
+                target = lim * sign
             else:
                 target = 0.0  # nothing held, or both held: go straight
         max_move = args.steer_rate * dt
         steering += max(-max_move, min(max_move, target - steering))
-        steering = max(-1.0, min(1.0, steering))
+        steering = max(-lim, min(lim, steering))
 
         forward = max(0.0, min(args.max_throttle, forward))
         car.steering = steering
@@ -277,16 +283,15 @@ def main():
     signal.signal(signal.SIGHUP, stop_and_exit)  # e.g. the SSH connection dropped
     try:
         car.throttle = 0.0
-        if args.steering_gain is not None:
-            car.steering_gain = args.steering_gain
-        if args.steering_offset is not None:
-            car.steering_offset = args.steering_offset
+        # Set explicitly: the library default gain is -0.65, which is not what our car is calibrated for.
+        car.steering_gain = args.steering_gain
+        car.steering_offset = args.steering_offset
         if args.throttle_gain is not None:
             car.throttle_gain = args.throttle_gain
         print("In use: steering_gain={} steering_offset={} throttle_gain={}".format(
             car.steering_gain, car.steering_offset, car.throttle_gain))
-        print("Throttle cap {} (hard limit {}), invert_throttle={}, invert_steering={}, steer mode {}".format(
-            args.max_throttle, HARD_LIMIT, args.invert_throttle, args.invert_steering, args.steer_mode))
+        print("Throttle cap {} (hard limit {}), steer limit {}, invert_throttle={}, invert_steering={}, steer mode {}".format(
+            args.max_throttle, HARD_LIMIT, args.steer_limit, args.invert_throttle, args.invert_steering, args.steer_mode))
         print("Starting camera...")
         camera = CSICamera(width=320, height=240,
                            capture_width=args.capture_width, capture_height=args.capture_height,
