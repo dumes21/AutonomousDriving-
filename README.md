@@ -16,6 +16,9 @@ car/drive_test.py       runs ON the JetRacer: steering sweep + short drive
 car/camera_test.py      runs ON the JetRacer: camera fps check + save images
 car/teleop_record.py    runs ON the JetRacer: keyboard driving + recording training data
 car/drive_model.py      runs ON the JetRacer: drive with a trained steering model
+car/camera_stream.py    runs ON the JetRacer: stream the camera only (no driving)
+car/mjpeg_stream.py     camera stream used by the car scripts above
+tools/view_camera.py    laptop: OpenCV window showing the car's camera stream
 train/inspect_data.py   check a recorded session (stats, histogram, sample frames)
 train/train_bc.py       train ResNet18 to copy the human's steering (imitation learning)
 PROJECT_PLAN.md         the project plan
@@ -83,3 +86,9 @@ Set a short key-repeat delay on your laptop so the deadman does not trip before 
 For the first run, lift the wheels off the ground. `X` stops `drive_model.py`.
 
 `train_bc.py --limit 200 --epochs 2` is a quick smoke test.
+
+**Watching the camera:** `teleop_record.py` and `drive_model.py` stream the camera on port 8080
+(`--stream-port 0` turns it off). On the laptop, run `python tools/view_camera.py <car-ip>` and leave it
+open: the window pops up when a car script starts and goes away when it stops. Q quits, S saves a
+snapshot, C toggles the red line marking the part `train_bc.py` crops off. `car/camera_stream.py`
+streams without driving. Find the car's IP with `hostname -I` on the car.

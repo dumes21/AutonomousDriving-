@@ -6,12 +6,13 @@ Prints counts and label statistics, and saves two PNGs into logs/:
 a steering histogram and a grid of sample frames with their labels.
 """
 import argparse
-import csv
 import os
 
 import cv2
 import matplotlib
 import numpy as np
+
+from session_labels import discarded_segments, read_label_rows
 
 matplotlib.use("Agg")  # no display needed
 import matplotlib.pyplot as plt  # noqa: E402
@@ -19,13 +20,11 @@ import matplotlib.pyplot as plt  # noqa: E402
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
 
-def read_labels(session):
-    """Return a list of (image_path, steering, throttle, timestamp), sorted by time."""
-    rows = []
-    with open(os.path.join(session, "labels.csv"), newline="") as f:
-        for r in csv.DictReader(f):
-            rows.append((os.path.join(session, r["filename"]), float(r["steering"]),
-                         float(r["throttle"]), float(r["timestamp"])))
+def read_labels(session, labels="labels.csv"):
+    """Return a list of (image_path, steering, throttle, timestamp), sorted by time.
+    Discarded segments are left out."""
+    rows = [(os.path.join(session, r["filename"]), float(r["steering"]), float(r["throttle"]),
+             float(r["timestamp"])) for r in read_label_rows(session, labels)]
     rows.sort(key=lambda r: r[3])
     return rows
 
@@ -35,11 +34,12 @@ def main():
     parser.add_argument("session", help="session folder containing labels.csv and the JPEGs")
     parser.add_argument("--samples", type=int, default=16, help="frames in the sample grid")
     parser.add_argument("--out", default=os.path.join(ROOT, "logs"))
+    parser.add_argument("--labels", default="labels.csv", help="labels file inside the session (e.g. labels_clean.csv)")
     args = parser.parse_args()
     os.makedirs(args.out, exist_ok=True)
     name = os.path.basename(os.path.normpath(args.session))
 
-    rows = read_labels(args.session)
+    rows = read_labels(args.session, args.labels)
     missing = [r[0] for r in rows if not os.path.isfile(r[0])]
     rows = [r for r in rows if os.path.isfile(r[0])]
     if not rows:
@@ -50,6 +50,8 @@ def main():
 
     print("session:        ", args.session)
     print("frames:         ", len(rows), "(%d listed in csv but missing on disk)" % len(missing))
+    skipped = sorted(discarded_segments(args.session), key=int)
+    print("discarded:       %s" % ("segments " + ", ".join(skipped) + " (ignored)" if skipped else "none"))
     print("duration:        %.1f s, about %.1f frames/s" % (t[-1] - t[0], len(rows) / max(t[-1] - t[0], 1e-6)))
     print("steering:        mean %+.3f  std %.3f  min %+.2f  max %+.2f" % (steer.mean(), steer.std(), steer.min(), steer.max()))
     print("throttle:        mean %.3f  min %.2f  max %.2f" % (thr.mean(), thr.min(), thr.max()))

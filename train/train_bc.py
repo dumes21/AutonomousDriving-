@@ -8,7 +8,6 @@ pretrained ResNet18 whose last layer predicts one number: the steering.
 Outputs go to model_log/bc/: best.pt, loss_curves.png, metrics.json.
 """
 import argparse
-import csv
 import json
 import os
 import random
@@ -21,6 +20,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 from torch.utils.data import DataLoader, Dataset
+
+from session_labels import read_label_rows
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -39,12 +40,11 @@ def preprocess(bgr, crop):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
-def load_session(session, crop, limit):
-    """Read labels.csv + images of one session, in time order. Returns (images, steering)."""
-    rows = []
-    with open(os.path.join(session, "labels.csv"), newline="") as f:
-        for r in csv.DictReader(f):
-            rows.append((float(r["timestamp"]), r["filename"], float(r["steering"])))
+def load_session(session, crop, limit, labels="labels.csv"):
+    """Read the labels file + images of one session, in time order, skipping discarded segments.
+    Returns (images, steering)."""
+    rows = [(float(r["timestamp"]), r["filename"], float(r["steering"]))
+            for r in read_label_rows(session, labels)]
     rows.sort()
     if limit:
         rows = rows[:limit]
@@ -139,6 +139,7 @@ def main():
     p.add_argument("--flip", action="store_true", help="augment with horizontal flips (steering negated)")
     p.add_argument("--no-pretrained", action="store_true", help="random init (skips the ImageNet download)")
     p.add_argument("--limit", type=int, default=0, help="use only the first N frames of each session (smoke test)")
+    p.add_argument("--labels", default="labels.csv", help="labels file inside each session (e.g. labels_clean.csv)")
     p.add_argument("--out", default=os.path.join(ROOT, "model_log", "bc"))
     p.add_argument("--seed", type=int, default=0)
     args = p.parse_args()
@@ -157,7 +158,7 @@ def main():
     # ---- load and split ----
     tr_x, tr_y, va_x, va_y = [], [], [], []
     for s in args.sessions:
-        imgs, steer = load_session(s, args.crop, args.limit)
+        imgs, steer = load_session(s, args.crop, args.limit, args.labels)
         is_val = split_by_time_blocks(len(imgs))
         print("%s: %d frames (%d train / %d val)" % (s, len(imgs), (~is_val).sum(), is_val.sum()))
         tr_x.append(imgs[~is_val]); tr_y.append(steer[~is_val])

@@ -6,7 +6,8 @@ Keys:   A / D  steer left / right: each press nudges the steering target by 0.1
         C      recentre steering (target 0)
         W / S  more / less throttle (small steps, capped)
         SPACE  stop (throttle and steering to 0)
-        R      start / stop recording
+        R      start / stop recording (each start begins a new numbered segment)
+        U      discard the most recent segment (only while recording is off)
         Q      quit
 
 DEADMAN: if no key arrives for 0.5 s, throttle drops to 0 (steering is left as
@@ -15,12 +16,19 @@ while driving. On SIGTERM / SIGHUP (e.g. the SSH connection drops) throttle
 and steering are zeroed before the script exits.
 
 While recording AND throttle > 0, a JPEG is saved about every 0.1 s into
-data/<session timestamp>/ and a row (filename, steering, throttle, timestamp)
-is appended to labels.csv in that folder. The recorded throttle is the
+data/<session timestamp>/ and a row (filename, steering, throttle, timestamp,
+segment) is appended to labels.csv in that folder. The recorded throttle is the
 forward amount (0..cap), whatever --invert-throttle is.
+
+Made a mess? Press R to stop, then U: that segment's JPEGs move to discarded/
+and its rows move from labels.csv to labels_discarded.csv. The training
+scripts ignore discarded segments.
 
     python3 car/teleop_record.py --invert-steering --invert-throttle
     python3 car/teleop_record.py --max-throttle 0.35 --steer-mode hold
+
+The camera is streamed on port 8080 while this runs: on the laptop,
+`python tools/view_camera.py <car-ip>` shows it. --stream-port 0 turns it off.
 
 Tips: terminals send no key RELEASES, and only the most recently pressed key
 repeats. Set a short key-repeat delay on your laptop, otherwise the 0.5 s
@@ -51,6 +59,8 @@ try:
 except ImportError as e:
     print("ERROR: could not import jetcam ({}). Run this on the JetRacer.".format(e))
     sys.exit(1)
+
+from mjpeg_stream import start_stream
 
 HARD_LIMIT = 0.6  # the script refuses to go above this
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
@@ -85,6 +95,8 @@ def parse_args():
     p.add_argument("--throttle-gain", type=float, default=None, help="leave unset to keep the library default")
     p.add_argument("--capture-width", type=int, default=1640)
     p.add_argument("--capture-height", type=int, default=1232)
+    p.add_argument("--stream-port", type=int, default=8080,
+                   help="stream the camera on this port for tools/view_camera.py (0 = off, default 8080)")
     args = p.parse_args()
     if args.max_throttle <= 0 or args.max_throttle > HARD_LIMIT:
         p.error("--max-throttle must be in (0, {}], got {}".format(HARD_LIMIT, args.max_throttle))
@@ -114,39 +126,103 @@ def stop_car(car):
 
 
 class Recorder(object):
-    """Owns the session folder and labels.csv. Created the first time recording starts."""
+    """Owns the session folder and labels.csv. Created the first time recording starts.
+
+    Every time recording is switched on a new segment starts (1, 2, 3, ...). discard_last()
+    throws away the most recent segment: its JPEGs move to discarded/, its rows move from
+    labels.csv to labels_discarded.csv."""
+
+    HEADER = ["filename", "steering", "throttle", "timestamp", "segment"]
 
     def __init__(self, out_dir):
         self.out_dir = out_dir
         self.session_dir = None
         self.csv_file = None
         self.writer = None
-        self.count = 0
+        self.count = 0          # frames saved this session (also numbers the files, never reused)
+        self.kept = 0           # frames still in labels.csv (count minus discarded)
+        self.segment = 0        # current / most recent segment number, 0 = none yet
+        self.segment_count = 0  # frames saved in that segment
+        self.discarded = set()  # segment numbers already discarded
+
+    def _labels_path(self):
+        return os.path.join(self.session_dir, "labels.csv")
 
     def start(self):
+        """Called each time recording is switched on: opens the session if needed, starts a new segment."""
         if self.session_dir is None:
             name = time.strftime("%Y%m%d_%H%M%S")
             self.session_dir = os.path.join(self.out_dir, name)
             os.makedirs(self.session_dir)
-            self.csv_file = open(os.path.join(self.session_dir, "labels.csv"), "w", newline="")
+            self.csv_file = open(self._labels_path(), "w", newline="")
             self.writer = csv.writer(self.csv_file)
-            self.writer.writerow(["filename", "steering", "throttle", "timestamp"])
+            self.writer.writerow(self.HEADER)
+            self.csv_file.flush()
+        self.segment += 1
+        self.segment_count = 0
 
     def save(self, image, steering, throttle):
         now = time.time()
         name = "{:06d}.jpg".format(self.count)
         if not cv2.imwrite(os.path.join(self.session_dir, name), image):
             raise RuntimeError("could not write image (disk full?)")
-        self.writer.writerow([name, "{:.4f}".format(steering), "{:.4f}".format(throttle), "{:.3f}".format(now)])
+        self.writer.writerow([name, "{:.4f}".format(steering), "{:.4f}".format(throttle),
+                              "{:.3f}".format(now), self.segment])
         self.csv_file.flush()  # keep the csv usable even if the script is killed
         self.count += 1
+        self.kept += 1
+        self.segment_count += 1
+
+    def discard_last(self):
+        """Discard the most recent segment. Only call while recording is off.
+        Returns a short message for the status screen."""
+        seg = self.segment
+        if seg == 0:
+            return "nothing recorded yet"
+        if seg in self.discarded:
+            return "segment {} already discarded".format(seg)
+        self.csv_file.close()
+        with open(self._labels_path(), newline="") as f:
+            rows = list(csv.reader(f))[1:]
+        keep = [r for r in rows if r[4] != str(seg)]
+        drop = [r for r in rows if r[4] == str(seg)]
+
+        # 1) labels.csv without the segment (atomic replace, so a crash never leaves it half-written)
+        tmp = self._labels_path() + ".tmp"
+        with open(tmp, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(self.HEADER)
+            w.writerows(keep)
+        os.replace(tmp, self._labels_path())
+        # 2) its rows go to labels_discarded.csv
+        disc_path = os.path.join(self.session_dir, "labels_discarded.csv")
+        new_file = not os.path.exists(disc_path)
+        with open(disc_path, "a", newline="") as f:
+            w = csv.writer(f)
+            if new_file:
+                w.writerow(self.HEADER)
+            w.writerows(drop)
+        # 3) its JPEGs go to discarded/
+        disc_dir = os.path.join(self.session_dir, "discarded")
+        if drop and not os.path.isdir(disc_dir):
+            os.makedirs(disc_dir)
+        for r in drop:
+            src = os.path.join(self.session_dir, r[0])
+            if os.path.exists(src):
+                os.rename(src, os.path.join(disc_dir, r[0]))
+
+        self.csv_file = open(self._labels_path(), "a", newline="")
+        self.writer = csv.writer(self.csv_file)
+        self.discarded.add(seg)
+        self.kept -= len(drop)
+        return "discarded segment {} ({} frames)".format(seg, len(drop))
 
     def close(self):
         if self.csv_file is not None:
             self.csv_file.close()
 
 
-def run(stdscr, args, car, camera, recorder):
+def run(stdscr, args, car, camera, recorder, streamer):
     try:
         curses.curs_set(0)  # hide the cursor (not every terminal supports this)
     except curses.error:
@@ -161,6 +237,7 @@ def run(stdscr, args, car, camera, recorder):
     recording = False
     last_save = 0.0
     last_key = ""
+    note = ""                           # result of the last U press, shown on screen
     t_prev = time.time()
     sign = -1.0 if args.invert_steering else 1.0  # A = left = -1 on the car, unless inverted
     latched = args.steer_mode == "latched"
@@ -169,6 +246,8 @@ def run(stdscr, args, car, camera, recorder):
     while True:
         # camera.read() blocks until the next frame (~30 fps), so it paces this loop too.
         image = camera.read()
+        if streamer is not None:
+            streamer.publish(image)
         now = time.time()
         dt = now - t_prev
         t_prev = now
@@ -211,7 +290,11 @@ def run(stdscr, args, car, camera, recorder):
                 recording = not recording
                 if recording:
                     recorder.start()
+                    note = ""
                 last_key = "R"
+            elif key == "u":
+                note = "stop recording (R) before U" if recording else recorder.discard_last()
+                last_key = "U"
             elif key == "q":
                 return
 
@@ -247,7 +330,7 @@ def run(stdscr, args, car, camera, recorder):
         else:
             deadman_text = "throttle 0 - press W" if deadman_left <= 0 else "ok"
         lines = [
-            "JetRacer teleop   A/D steer  C centre  W/S throttle  SPACE stop  R record  Q quit",
+            "JetRacer teleop   A/D steer  C centre  W/S throttle  SPACE stop  R record  U undo segment  Q quit",
             "",
             "last key:   {}".format(last_key),
             "steering:   actual {:+.2f}   target {:+.2f}   ({})".format(steering, target, args.steer_mode),
@@ -255,9 +338,16 @@ def run(stdscr, args, car, camera, recorder):
                 forward, args.max_throttle, throttle_for_car(forward, args.max_throttle, args.invert_throttle)),
             "deadman:    {}".format(deadman_text),
             "recording:  {}".format("ON  <<<" if recording else "off"),
-            "frames:     {}".format(recorder.count),
+            "segment:    {}".format("{}   ({} frames){}".format(
+                recorder.segment, recorder.segment_count,
+                "   DISCARDED" if recorder.segment in recorder.discarded else "")
+                if recorder.segment else "(starts when you press R)"),
+            "frames:     {} kept   ({} saved in total)".format(recorder.kept, recorder.count),
+            "undo:       {}".format(note or "-"),
             "session:    {}".format(recorder.session_dir or "(starts when you press R)"),
             "loop:       {:.0f} Hz".format(1.0 / dt if dt > 0 else 0.0),
+            "stream:     {}".format("port {}, {} viewer(s)".format(args.stream_port, streamer.clients)
+                                    if streamer is not None else "off"),
         ]
         stdscr.erase()
         for i, line in enumerate(lines):
@@ -273,6 +363,7 @@ def main():
 
     car = NvidiaRacecar()
     camera = None
+    streamer = None
     recorder = Recorder(args.out)
 
     def stop_and_exit(signum, frame):
@@ -296,11 +387,14 @@ def main():
         camera = CSICamera(width=320, height=240,
                            capture_width=args.capture_width, capture_height=args.capture_height,
                            capture_fps=30)
-        curses.wrapper(run, args, car, camera, recorder)
+        streamer = start_stream(args.stream_port)
+        curses.wrapper(run, args, car, camera, recorder, streamer)
     except KeyboardInterrupt:
         print("Interrupted.")
     finally:
         stop_car(car)
+        if streamer is not None:
+            streamer.stop()
         if camera is not None:
             try:
                 camera.cap.release()
@@ -309,7 +403,8 @@ def main():
         recorder.close()
         print("Throttle set to 0.")
         if recorder.session_dir is not None:
-            print("Saved {} frames to {}".format(recorder.count, recorder.session_dir))
+            print("Saved {} frames in {} segment(s) to {} ({} frames discarded)".format(
+                recorder.kept, recorder.segment, recorder.session_dir, recorder.count - recorder.kept))
 
 
 if __name__ == "__main__":

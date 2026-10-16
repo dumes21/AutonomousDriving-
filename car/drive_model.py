@@ -11,6 +11,9 @@ connection drops). This script needs a real terminal for the W key.
     python3 car/drive_model.py model_log/bc/best.pt --invert-steering --invert-throttle
     python3 car/drive_model.py best.pt --throttle 0.25 --smooth 0.6
 
+The camera is streamed on port 8080 while this runs: on the laptop,
+`python tools/view_camera.py <car-ip>` shows it. --stream-port 0 turns it off.
+
 Tip: set a short key-repeat delay on your laptop, otherwise the deadman can
 trip between the first W press and the repeat starting.
 
@@ -42,6 +45,8 @@ except ImportError as e:
     print("ERROR: could not import jetracer/jetcam ({}). Run this on the JetRacer.".format(e))
     sys.exit(1)
 
+from mjpeg_stream import start_stream
+
 HARD_LIMIT = 0.6  # the script refuses to go above this
 
 
@@ -65,6 +70,8 @@ def parse_args():
     p.add_argument("--throttle-gain", type=float, default=None, help="leave unset to keep the library default")
     p.add_argument("--capture-width", type=int, default=1640)
     p.add_argument("--capture-height", type=int, default=1232)
+    p.add_argument("--stream-port", type=int, default=8080,
+                   help="stream the camera on this port for tools/view_camera.py (0 = off, default 8080)")
     args = p.parse_args()
     if args.throttle <= 0 or args.throttle > HARD_LIMIT:
         p.error("--throttle must be in (0, {}], got {}".format(HARD_LIMIT, args.throttle))
@@ -145,6 +152,7 @@ def main():
 
     car = NvidiaRacecar()
     camera = None
+    streamer = None
     old_tty = termios.tcgetattr(sys.stdin)
 
     def stop_and_exit(signum, frame):
@@ -168,6 +176,7 @@ def main():
         camera = CSICamera(width=320, height=240,
                            capture_width=args.capture_width, capture_height=args.capture_height,
                            capture_fps=30)
+        streamer = start_stream(args.stream_port)
         # Warm-up: the first inference is slow (GPU init). Do it before the wheels turn.
         with torch.no_grad():
             model(preprocess(camera.read(), ckpt, device))
@@ -187,6 +196,8 @@ def main():
                     last_w_time = time.time()
 
             image = camera.read()
+            if streamer is not None:
+                streamer.publish(image)
             with torch.no_grad():
                 raw = float(model(preprocess(image, ckpt, device)).item())
             if raw != raw:  # NaN check
@@ -210,6 +221,8 @@ def main():
     finally:
         stop_car(car)
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
+        if streamer is not None:
+            streamer.stop()
         if camera is not None:
             try:
                 camera.cap.release()
