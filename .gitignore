@@ -9,3 +9,4 @@ videos/
 data/*/discarded/
 data/*/labels_discarded.csv
 
+logs/

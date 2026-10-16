@@ -21,6 +21,7 @@ FIRST RUN: put the car on a stand with the wheels off the ground and check
 that the steering turns towards what the camera sees.
 """
 import argparse
+import csv
 import os
 import select
 import signal
@@ -48,6 +49,9 @@ except ImportError as e:
 from mjpeg_stream import start_stream
 
 HARD_LIMIT = 0.6  # the script refuses to go above this
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+LOG_COLUMNS = ["t", "raw_pred", "steer_sent", "throttle", "loop_dt_ms", "infer_ms"]
+MIN_FPS = 10.0  # print a warning below this
 
 
 def parse_args():
@@ -62,8 +66,12 @@ def parse_args():
                    help="send the NEGATED throttle to the car (use if forward needs a negative value)")
     p.add_argument("--deadman", type=float, default=0.5,
                    help="seconds without a W key press before throttle is set to 0 (default 0.5)")
+    p.add_argument("--pred-gain", type=float, default=1.0,
+                   help="multiplies the MODEL's predicted steering before it is clipped to --steer-limit "
+                        "(default 1.0). Not the servo calibration: that is --steering-gain")
     p.add_argument("--steering-gain", type=float, default=1.0,
-                   help="car.steering_gain (default 1.0; the library default of -0.65 is NOT used)")
+                   help="car.steering_gain, the SERVO calibration (default 1.0; the library default of -0.65 "
+                        "is NOT used). Does not scale the model: that is --pred-gain")
     p.add_argument("--steering-offset", type=float, default=0.0, help="car.steering_offset (default 0.0)")
     p.add_argument("--steer-limit", type=float, default=0.8,
                    help="clamp every steering command to +-this value (default 0.8)")
@@ -79,6 +87,8 @@ def parse_args():
         p.error("--smooth must be in (0, 1]")
     if args.deadman <= 0:
         p.error("--deadman must be > 0")
+    if args.pred_gain < 0:
+        p.error("--pred-gain must be >= 0 (use --invert-steering to flip the sign)")
     if not 0.0 < args.steer_limit <= 1.0:
         p.error("--steer-limit must be in (0, 1]")
     return args
@@ -153,6 +163,7 @@ def main():
     car = NvidiaRacecar()
     camera = None
     streamer = None
+    log_file = None
     old_tty = termios.tcgetattr(sys.stdin)
 
     def stop_and_exit(signum, frame):
@@ -172,6 +183,8 @@ def main():
             car.steering_gain, car.steering_offset, car.throttle_gain))
         print("Throttle {} (hard limit {}), steer limit {}, invert_throttle={}, invert_steering={}".format(
             args.throttle, HARD_LIMIT, args.steer_limit, args.invert_throttle, args.invert_steering))
+        print("Model steering gain (--pred-gain): {}  (servo calibration --steering-gain is separate)".format(
+            args.pred_gain))
 
         camera = CSICamera(width=320, height=240,
                            capture_width=args.capture_width, capture_height=args.capture_height,
@@ -182,11 +195,20 @@ def main():
             model(preprocess(camera.read(), ckpt, device))
         tty.setcbreak(sys.stdin.fileno())  # read keys without waiting for Enter
 
+        if not os.path.isdir(LOG_DIR):
+            os.makedirs(LOG_DIR)
+        log_path = os.path.join(LOG_DIR, "drive_{}.csv".format(time.strftime("%Y%m%d_%H%M%S")))
+        log_file = open(log_path, "w", newline="")
+        log = csv.writer(log_file)
+        log.writerow(LOG_COLUMNS)
+        print("Logging every control step to {}".format(os.path.abspath(log_path)))
+
         print("Ready. Hold W to drive, X to stop.")
         sign = -1.0 if args.invert_steering else 1.0
         steering = 0.0
         last_w_time = 0.0  # when W last arrived (deadman)
-        frames, t_fps = 0, time.time()
+        t_start = t_prev = t_fps = time.time()
+        frames, infer_sum = 0, 0.0
         while True:
             for key in read_keys():
                 if key == "x" or key == "EOF":
@@ -198,29 +220,47 @@ def main():
             image = camera.read()
             if streamer is not None:
                 streamer.publish(image)
+            t_infer = time.time()
             with torch.no_grad():
-                raw = float(model(preprocess(image, ckpt, device)).item())
-            if raw != raw:  # NaN check
+                raw_pred = float(model(preprocess(image, ckpt, device)).item())
+            infer_ms = (time.time() - t_infer) * 1000.0
+            if raw_pred != raw_pred:  # NaN check
                 raise RuntimeError("model output is NaN")
-            raw = max(-args.steer_limit, min(args.steer_limit, sign * raw))
+            # model output -> flip sign if asked -> scale by --pred-gain -> clip to +-steer-limit
+            raw = max(-args.steer_limit, min(args.steer_limit, sign * args.pred_gain * raw_pred))
             steering = args.smooth * raw + (1.0 - args.smooth) * steering  # exponential smoothing
             steering = max(-args.steer_limit, min(args.steer_limit, steering))
             car.steering = steering
 
             # Deadman: throttle only while W keeps repeating.
             go = time.time() - last_w_time <= args.deadman
-            car.throttle = throttle_for_car(args.throttle if go else 0.0, args.throttle, args.invert_throttle)
+            throttle_sent = throttle_for_car(args.throttle if go else 0.0, args.throttle, args.invert_throttle)
+            car.throttle = throttle_sent
+
+            now = time.time()
+            loop_dt_ms = (now - t_prev) * 1000.0
+            t_prev = now
+            log.writerow(["{:.3f}".format(now - t_start), "{:.4f}".format(raw_pred), "{:.4f}".format(steering),
+                          "{:.3f}".format(throttle_sent), "{:.1f}".format(loop_dt_ms), "{:.1f}".format(infer_ms)])
+            log_file.flush()  # keep the log usable even if the script is killed
 
             frames += 1
-            if time.time() - t_fps >= 1.0:
-                print("\rfps {:5.1f}   steering {:+.2f}   {}".format(
-                    frames / (time.time() - t_fps), steering, "DRIVING" if go else "throttle 0 - hold W"))
-                frames, t_fps = 0, time.time()
+            infer_sum += infer_ms
+            if now - t_fps >= 1.0:
+                fps = frames / (now - t_fps)
+                print("\rfps {:5.1f}  infer {:5.1f} ms  raw_pred {:+.2f}  steer_sent {:+.2f}   {}".format(
+                    fps, infer_sum / frames, raw_pred, steering, "DRIVING" if go else "throttle 0 - hold W"))
+                if fps < MIN_FPS:
+                    print("\rWARNING: loop is only {:.1f} fps (< {:.0f}): steering will lag. "
+                          "Check the stream/other load or use a faster model.".format(fps, MIN_FPS))
+                frames, infer_sum, t_fps = 0, 0.0, now
     except KeyboardInterrupt:
         print("\nInterrupted.")
     finally:
         stop_car(car)
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
+        if log_file is not None:
+            log_file.close()
         print("Throttle set to 0.")
         sys.stdout.flush()
         os._exit(0)  # skip camera.cap.release(): the GST_ARGUS cleanup can hang for minutes
