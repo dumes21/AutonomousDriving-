@@ -221,14 +221,9 @@ def main():
     finally:
         stop_car(car)
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
-        if streamer is not None:
-            streamer.stop()
-        if camera is not None:
-            try:
-                camera.cap.release()
-            except Exception:
-                pass
         print("Throttle set to 0.")
+        sys.stdout.flush()
+        os._exit(0)  # skip camera.cap.release(): the GST_ARGUS cleanup can hang for minutes
 
 
 if __name__ == "__main__":
