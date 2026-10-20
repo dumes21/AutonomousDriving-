@@ -36,6 +36,18 @@ class Config:
     wheelbase = 0.17           # m, JetRacer is about 17 cm
     max_steer = 0.4            # rad (~23 deg) at full left/right
 
+    # --- vehicle footprint: used for the off-track test and for drawing the car ---
+    # (x, y) of the car is the REAR AXLE centre (that is what the bicycle model below moves).
+    car_width = 0.17           # m, measured
+    car_length = 0.20          # m bumper to bumper. NOT MEASURED: an assumption, please measure.
+                               # Results are sensitive to it (see docs/FOOTPRINT_COLLISION.md): the 0.26 m lane
+                               # is tight in the bends for a long body.
+    car_rear_overhang = None   # m from the rear axle to the rear bumper. None = (car_length - wheelbase) / 2,
+                               # i.e. equal front and rear overhang. ASSUMPTION, not measured.
+    footprint_collision = True  # True: the whole car body must stay inside the lane.
+                                # False: old rule, only the rear-axle point is checked (kept for comparisons).
+    footprint_samples = 5      # points along each long side of the body that are checked
+
     # --- episode ---
     max_steps = 1000           # 1000 * 0.05 s = 50 s, about 3 laps
     start_offset_frac = 0.3    # start within +-30% of the half-width of the centre
@@ -65,6 +77,7 @@ class JetRacerEnv(gym.Env):
         self.observation_space = spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)
 
         self._build_track()
+        self._build_footprint()
         self._window = None  # pygame objects are created lazily in render()
         self._clock = None
 
@@ -118,6 +131,32 @@ class JetRacerEnv(gym.Env):
         # of the previous nearest one. The car moves ~3 cm/step and waypoints
         # are ~2 cm apart, so 10 either side is plenty.
         self._near = np.arange(-10, 11)
+        # Body points can be ~0.25 m (15 waypoints) from the rear axle, so their search window is wider.
+        self._fp_near = np.arange(-40, 41)
+
+    def _build_footprint(self):
+        """Points of the car body outline in the car frame (x forward from the rear axle, y left).
+        Corners plus samples along the sides, so that the inside edge of the body is checked in
+        a bend as well (the inside of a bend can be touched mid-edge, not only at a corner)."""
+        c = self.cfg
+        rear = c.car_rear_overhang if c.car_rear_overhang is not None else 0.5 * (c.car_length - c.wheelbase)
+        front = c.car_length - rear
+        hw = 0.5 * c.car_width
+        xs = np.linspace(-rear, front, max(2, c.footprint_samples))
+        pts = [(x, hw) for x in xs] + [(x, -hw) for x in xs] + [(-rear, 0.0), (front, 0.0)]
+        self._fp = np.array(pts)                      # (K, 2) outline points
+        self._fp_corners = np.array([(front, hw), (front, -hw), (-rear, -hw), (-rear, hw)])
+        self._fp_front, self._fp_rear = front, rear
+
+    def _footprint_margin(self):
+        """Clearance in metres between the worst point of the car body and the lane edge
+        (>= 0: inside the lane, < 0: some part of the body is over the boundary)."""
+        ch, sh = math.cos(self.heading), math.sin(self.heading)
+        px = self.x + self._fp[:, 0] * ch - self._fp[:, 1] * sh
+        py = self.y + self._fp[:, 0] * sh + self._fp[:, 1] * ch
+        cand = (self.idx + self._fp_near) % len(self.track_s)
+        d2 = (px[:, None] - self.track_x[cand][None, :]) ** 2 + (py[:, None] - self.track_y[cand][None, :]) ** 2
+        return float(self.cfg.lane_half_width - math.sqrt(d2.min(axis=1).max()))
 
     # ------------------------------------------------------------------
     # Gymnasium API
@@ -127,18 +166,26 @@ class JetRacerEnv(gym.Env):
         c = self.cfg
         rng = self.np_random
 
-        # Pick a start point on the centre line, then nudge it sideways/rotate it.
-        if c.random_start_along_track:
-            idx = int(rng.integers(len(self.track_s)))
-        else:
-            idx = 0
-        offset = rng.uniform(-1, 1) * c.start_offset_frac * c.lane_half_width
-        heading_err = rng.uniform(-1, 1) * c.start_heading_noise
-        t = self.track_theta[idx]
-        # left normal of the track is (-sin t, cos t)
-        self.x = float(self.track_x[idx] - offset * math.sin(t))
-        self.y = float(self.track_y[idx] + offset * math.cos(t))
-        self.heading = float(t + heading_err)
+        # Pick a start point on the centre line, then nudge it sideways/rotate it. With the footprint
+        # rule the whole body must start inside the lane, so redraw (same ranges) until it does.
+        for _ in range(200):
+            if c.random_start_along_track:
+                idx = int(rng.integers(len(self.track_s)))
+            else:
+                idx = 0
+            offset = rng.uniform(-1, 1) * c.start_offset_frac * c.lane_half_width
+            heading_err = rng.uniform(-1, 1) * c.start_heading_noise
+            t = self.track_theta[idx]
+            # left normal of the track is (-sin t, cos t)
+            self.x = float(self.track_x[idx] - offset * math.sin(t))
+            self.y = float(self.track_y[idx] + offset * math.cos(t))
+            self.heading = float(t + heading_err)
+            if not c.footprint_collision:
+                break
+            self.idx = idx
+            self._update_track_state()
+            if self._footprint_margin() >= 0.0:
+                break
 
         self.idx = idx              # nearest waypoint (kept between steps)
         self.last_steering = 0.0    # -1..+1
@@ -173,7 +220,8 @@ class JetRacerEnv(gym.Env):
         self.total_progress += ds
 
         off = abs(self.offset) / c.lane_half_width
-        terminated = off > 1.0
+        margin = self._footprint_margin() if c.footprint_collision else c.lane_half_width - abs(self.offset)
+        terminated = margin < 0.0       # footprint rule: any part of the body over the line; old rule: centre only
         truncated = (not terminated) and self.steps >= c.max_steps
 
         if terminated:
@@ -186,6 +234,7 @@ class JetRacerEnv(gym.Env):
             "lap": max(0, int(self.total_progress // self.perimeter)),
             "lane_offset_m": self.offset,
             "progress_m": self.total_progress,
+            "footprint_margin_m": margin,
         }
         if self.render_mode == "human":
             self.render()
@@ -263,14 +312,16 @@ class JetRacerEnv(gym.Env):
             pygame.draw.circle(surf, (90, 90, 90), p, lane_px // 2)
         pygame.draw.lines(surf, (230, 230, 230), True, pts, 1)
 
-        # Car: a rotated rectangle (0.25 m x 0.15 m) plus a nose marker.
+        # Car body: the real footprint (car_width x car_length, to scale) with the rear axle at (x, y),
+        # a nose marker at the front, and a white dot on the rear axle (the point the dynamics move).
         cx, cy = self.x, self.y
         cos_h, sin_h = math.cos(self.heading), math.sin(self.heading)
-        corners = []
-        for lx, ly in [(0.125, 0.075), (0.125, -0.075), (-0.125, -0.075), (-0.125, 0.075)]:
-            corners.append(self._to_px(cx + lx * cos_h - ly * sin_h, cy + lx * sin_h + ly * cos_h))
+        corners = [self._to_px(cx + lx * cos_h - ly * sin_h, cy + lx * sin_h + ly * cos_h)
+                   for lx, ly in self._fp_corners]
         pygame.draw.polygon(surf, (220, 50, 50), corners)
-        pygame.draw.circle(surf, (255, 255, 0), self._to_px(cx + 0.125 * cos_h, cy + 0.125 * sin_h), 4)
+        f = self._fp_front
+        pygame.draw.circle(surf, (255, 255, 0), self._to_px(cx + f * cos_h, cy + f * sin_h), 4)
+        pygame.draw.circle(surf, (255, 255, 255), self._to_px(cx, cy), 2)
 
         if self.render_mode == "human":
             pygame.event.pump()
