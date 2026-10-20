@@ -20,6 +20,8 @@ car/teleop_record.py    runs ON the JetRacer: keyboard driving + recording train
 car/drive_model.py      runs ON the JetRacer: drive with a trained steering model
 car/camera_stream.py    runs ON the JetRacer: stream the camera only (no driving)
 car/mjpeg_stream.py     camera stream used by the car scripts above
+car/lane_detection.py   orange-line detector (OpenCV): image-space offset/heading + validity; CLI for test images
+train/analyse_lane_data.py  run the detector over data/ sessions -> logs/lane/ (CSV, debug images, stats)
 tools/view_camera.py    laptop: OpenCV window showing the car's camera stream
 train/inspect_data.py   check a recorded session (stats, histogram, sample frames)
 train/train_bc.py       train ResNet18 to copy the human's steering (imitation learning)
@@ -98,3 +100,13 @@ For the first run, lift the wheels off the ground. `X` stops `drive_model.py`.
 open: the window pops up when a car script starts and goes away when it stops. Q quits, S saves a
 snapshot, C toggles the red line marking the part `train_bc.py` crops off. `car/camera_stream.py`
 streams without driving. Find the car's IP with `hostname -I` on the car.
+
+## Lane detection (perception prototype)
+
+```
+python car/lane_detection.py some_frame.jpg --out logs/lane_test   # prints status/features, saves annotated copy
+python train/analyse_lane_data.py                                  # all data/2*/ sessions -> logs/lane/
+```
+
+The outputs are image-space proxies, not metres or radians, and the detector has only been checked on
+the recorded frames. See `docs/LANE_FEATURES.md` for the results and how they map to `JetRacerEnv`'s observation.
