@@ -11,6 +11,8 @@ Prior art: [masato-ka/airc-rl-agent](https://github.com/masato-ka/airc-rl-agent)
 sim/track_env.py        the simulator (gymnasium env "JetRacerEnv")
 sim/demo.py             watch the sim, or benchmark its speed
 sim/train.py            train DQN, compare with baselines
+sim/test_env.py         pre-flight check: SB3 check_env + 100 random steps
+sim/view_track.py       look at the track/car (window, or a GIF when headless)
 tests/test_track_env.py tests for the sim
 car/drive_test.py       runs ON the JetRacer: steering sweep + short drive
 car/camera_test.py      runs ON the JetRacer: camera fps check + save images
@@ -33,10 +35,14 @@ python sim/demo.py               # pygame window, random actions
 python sim/demo.py --benchmark   # 100k random steps, prints steps/sec
 python sim/train.py --seed 0     # train DQN (300k steps, ~5 min), prints a results table
 pytest                           # run the tests
+python sim/test_env.py           # validate the env before training
+python sim/view_track.py --policy centre   # window; add --gif out.gif when headless
 ```
 
 The observation is only `[lane_offset, heading_error, last_steering]`, because
 that is all the real car's camera pipeline will be able to give us later.
+Known sim-to-real gaps are listed in `docs/SIM_TO_REAL.md`.
+For SageMaker use `requirements-sagemaker.txt` (headless OpenCV, no torch pin).
 
 ## Run the car scripts (on the Jetson, Python 3.6)
 
