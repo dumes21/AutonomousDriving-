@@ -21,6 +21,8 @@ car/drive_model.py      runs ON the JetRacer: drive with a trained steering mode
 car/camera_stream.py    runs ON the JetRacer: stream the camera only (no driving)
 car/mjpeg_stream.py     camera stream used by the car scripts above
 car/lane_detection.py   orange-line detector (OpenCV): image-space offset/heading + validity; CLI for test images
+car/lane_observation.py two-line-only observation + safe-stop gate (decides only; never touches motors)
+train/replay_gate.py    replay recordings through the gate: how often would the car stop
 train/analyse_lane_data.py  run the detector over data/ sessions -> logs/lane/ (CSV, debug images, stats)
 tools/view_camera.py    laptop: OpenCV window showing the car's camera stream
 train/inspect_data.py   check a recorded session (stats, histogram, sample frames)
@@ -110,3 +112,9 @@ python train/analyse_lane_data.py                                  # all data/2*
 
 The outputs are image-space proxies, not metres or radians, and the detector has only been checked on
 the recorded frames. See `docs/LANE_FEATURES.md` for the results and how they map to `JetRacerEnv`'s observation.
+
+The two-line-only design and safe-stop rule are in `docs/TWO_LINE_PIPELINE.md`.
+
+Camera -> DQN state (offset in m, heading in rad, sim conventions; UNCALIBRATED until measured): `perception/state_estimator.py`, `perception/calibrate.py`, `docs/CAMERA_TO_STATE.md`.
+
+DQN on the car (dry run by default; motors need a calibrated camera + steering map): `car/drive_dqn.py`, `inference/`, `docs/FIRST_PHYSICAL_TEST.md`.

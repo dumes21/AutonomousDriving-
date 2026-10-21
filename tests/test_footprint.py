@@ -56,12 +56,27 @@ def test_every_reset_starts_with_the_whole_body_inside_the_lane():
         assert env._footprint_margin() >= 0.0
 
 
-def test_footprint_dimensions_follow_the_config():
+def test_footprint_dimensions_follow_the_config_with_independent_overhangs():
     c = Config()
-    c.car_width, c.car_length = 0.17, 0.22
+    c.car_width, c.wheelbase = 0.17, 0.15
+    c.car_front_overhang, c.car_rear_overhang = 0.06, 0.02          # deliberately unequal
     env = JetRacerEnv(config=c)
     xs, ys = env._fp[:, 0], env._fp[:, 1]
-    assert abs((xs.max() - xs.min()) - 0.22) < 1e-9 and abs((ys.max() - ys.min()) - 0.17) < 1e-9
+    assert abs(xs.min() - (-0.02)) < 1e-9                            # rear bumper behind the rear axle
+    assert abs(xs.max() - (0.15 + 0.06)) < 1e-9                      # front bumper ahead of the front axle
+    assert abs((xs.max() - xs.min()) - (0.02 + 0.15 + 0.06)) < 1e-9
+    assert abs((ys.max() - ys.min()) - 0.17) < 1e-9
+
+
+def test_overhangs_change_the_clearance_independently():
+    base = JetRacerEnv()
+    place(base, yaw=0.15)
+    m0 = base._footprint_margin()
+    c = Config()
+    c.car_front_overhang = Config.car_front_overhang + 0.05          # longer nose only
+    longer = JetRacerEnv(config=c)
+    place(longer, yaw=0.15)
+    assert longer._footprint_margin() < m0
 
 
 def test_render_rgb_array_draws_the_footprint():
@@ -72,6 +87,7 @@ def test_render_rgb_array_draws_the_footprint():
     assert frame.ndim == 3 and frame.shape[2] == 3
     red = np.all(frame == (220, 50, 50), axis=2).sum()
     px = env.cfg.pixels_per_metre
-    expected = env.cfg.car_width * env.cfg.car_length * px * px
+    length = env.cfg.car_rear_overhang + env.cfg.wheelbase + env.cfg.car_front_overhang
+    expected = env.cfg.car_width * length * px * px
     assert 0.8 * expected < red < 1.1 * expected
     env.close()

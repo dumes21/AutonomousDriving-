@@ -1,49 +1,32 @@
-"""Lightweight 2D simulator for JetRacer lane following (Level 1).
-
-A kinematic-bicycle car drives around a closed stadium (oval) track.
-Everything is in metres and radians. Rendering (pygame) is optional and
-completely separate from the fast step() path.
-
-Observation (3 numbers, roughly in [-1, 1]) - this is deliberately ONLY what
-the real car's camera pipeline can later give us:
-    lane_offset    signed distance from the lane centre / lane half-width
-                   (+ = car is LEFT of the centre line)
-    heading_error  (car heading - track direction) / pi
-                   (+ = car points LEFT of the track direction)
-    last_steering  previous action's steering: +1 = left, 0 = straight, -1 = right
-
-Actions: 0 = steer left, 1 = straight, 2 = steer right (fixed speed).
-"""
 import math
 
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-
 class Config:
-    """All tunables live here. Change numbers here, not inside the code."""
 
-    # --- track (a stadium: two straights joined by two half-circles) ---
-    straight_length = 2.0      # m, length of each straight
-    corner_radius = 0.8        # m, radius of the centre line in the bends
-    lane_half_width = 0.20     # m, car must stay within this of the centre line
-    n_points = 400             # number of centre-line waypoints
+    # Physical track measurements
+    straight_length = 1.0       # metres
+    corner_radius = 0.72        # centreline radius, estimated
+    lane_half_width = 0.13      # 26 cm total lane width
+    n_points = 400
+
 
     # --- car (kinematic bicycle) ---
     dt = 0.05                  # s per step (20 Hz, similar to a camera loop)
     speed = 0.6                # m/s, constant
-    wheelbase = 0.17           # m, JetRacer is about 17 cm
+    wheelbase = 0.15           # m, front axle to rear axle, measured (approx.)
     max_steer = 0.4            # rad (~23 deg) at full left/right
 
     # --- vehicle footprint: used for the off-track test and for drawing the car ---
     # (x, y) of the car is the REAR AXLE centre (that is what the bicycle model below moves).
-    car_width = 0.17           # m, measured
-    car_length = 0.20          # m bumper to bumper. NOT MEASURED: an assumption, please measure.
-                               # Results are sensitive to it (see docs/FOOTPRINT_COLLISION.md): the 0.26 m lane
-                               # is tight in the bends for a long body.
-    car_rear_overhang = None   # m from the rear axle to the rear bumper. None = (car_length - wheelbase) / 2,
-                               # i.e. equal front and rear overhang. ASSUMPTION, not measured.
+    car_width = 0.17           # m, measured (widest point of the body)
+    # Body length = car_rear_overhang + wheelbase + car_front_overhang. The overhangs are set independently.
+    car_front_overhang = 0.025  # m, front axle -> front bumper. NOT MEASURED: placeholder, please measure.
+    car_rear_overhang = 0.025   # m, rear axle -> rear bumper.  NOT MEASURED: placeholder, please measure.
+                                # (0.025 + 0.15 + 0.025 = 0.20 m long.) Results are sensitive to these:
+                                # see docs/FOOTPRINT_COLLISION.md.
     footprint_collision = True  # True: the whole car body must stay inside the lane.
                                 # False: old rule, only the rear-axle point is checked (kept for comparisons).
     footprint_samples = 5      # points along each long side of the body that are checked
@@ -139,8 +122,8 @@ class JetRacerEnv(gym.Env):
         Corners plus samples along the sides, so that the inside edge of the body is checked in
         a bend as well (the inside of a bend can be touched mid-edge, not only at a corner)."""
         c = self.cfg
-        rear = c.car_rear_overhang if c.car_rear_overhang is not None else 0.5 * (c.car_length - c.wheelbase)
-        front = c.car_length - rear
+        rear = c.car_rear_overhang                    # rear axle -> rear bumper
+        front = c.wheelbase + c.car_front_overhang    # rear axle -> front bumper
         hw = 0.5 * c.car_width
         xs = np.linspace(-rear, front, max(2, c.footprint_samples))
         pts = [(x, hw) for x in xs] + [(x, -hw) for x in xs] + [(-rear, 0.0), (front, 0.0)]
@@ -312,7 +295,7 @@ class JetRacerEnv(gym.Env):
             pygame.draw.circle(surf, (90, 90, 90), p, lane_px // 2)
         pygame.draw.lines(surf, (230, 230, 230), True, pts, 1)
 
-        # Car body: the real footprint (car_width x car_length, to scale) with the rear axle at (x, y),
+        # Car body: the real footprint (car_width x body length, to scale) with the rear axle at (x, y),
         # a nose marker at the front, and a white dot on the rear axle (the point the dynamics move).
         cx, cy = self.x, self.y
         cos_h, sin_h = math.cos(self.heading), math.sin(self.heading)

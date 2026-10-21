@@ -10,3 +10,6 @@ data/*/discarded/
 data/*/labels_discarded.csv
 
 logs/
+
+# DQN experiment runs (checkpoints, replay buffers, logs)
+experiments/
