@@ -4,22 +4,22 @@ ENV_CONFIG:
     robot_name: 'jetbot-v0'
     wrapped_env: 'learning_racer.agent.teleoperation:TeleoperationEnv'
     parts:
-      teleoperator: 'learning_racer.teleoperate:Teleoperation'
+      teleoperator: 'learning_racer.teleoperate:Teleoperator'
   jetracer:
     robot_name: 'jetracer-v0'
     wrapped_env: 'learning_racer.agent.teleoperation:TeleoperationEnv'
     parts:
-      teleoperator: 'learning_racer.teleoperate:Teleoperation'
+      teleoperator: 'learning_racer.teleoperate:Teleoperator'
   jetbot-auto:
     robot_name: 'jetbot-v0'
     wrapped_env: 'learning_racer.agent.auto_stop:AutoStopEnv'
     parts:
-      teleoperator: 'learning_racer.teleoperate:Teleoperation'
+      teleoperator: 'learning_racer.teleoperate:Teleoperator'
   jetracer-auto:
     robot_name: 'jetracer-v0'
     wrapped_env: 'learning_racer.agent.auto_stop:AutoStopEnv'
     parts:
-      teleoperator: 'learning_racer.teleoperate:Teleoperation'
+      teleoperator: 'learning_racer.teleoperate:Teleoperator'
   sim:
     robot_name: 'donkey-generated-track-v0'
     conf:
@@ -36,7 +36,7 @@ SAC_SETTING:
   ENT_COEF: 'auto_0.1'
   TRAIN_FREQ: 1
   BATCH_SIZE: 64
-  GRADIENT_STEPS: 300
+  GRADIENT_STEPS: 200
   LEARNING_STARTS: 300
   BUFFER_SIZE: 30000
   VARIANTS_SIZE: 32
@@ -76,19 +76,17 @@ REWARD_SETTING:
 AGENT_SETTING:
   # Agent settings
   N_COMMAND_HISTORY: 20
-  MIN_STEERING: -0.8  # our steer limit
+  MIN_STEERING: -0.8
   MAX_STEERING: 0.8
-  # Negative = forward on our car (its motor driver picks direction from the throttle sign,
-  # like --invert-throttle in car/drive_model.py). Was 0.7 / 0.95.
   MIN_THROTTLE: -0.3
   MAX_THROTTLE: -0.4
-  MAX_STEERING_DIFF: 0.35 # was 0.9
+  MAX_STEERING_DIFF: 0.35
 
 JETRACER_SETTING:
   STEERING_CHANNEL: 0
   THROTTLE_CHANNEL: 1
-  STEERING_GAIN: 1.0  # our calibration (library default -0.65)
-  THROTTLE_GAIN: 0.8  # must be positive: our jetracer library writes throttle*gain straight to the PWM duty cycle
+  STEERING_GAIN: 1.0
+  THROTTLE_GAIN: 0.8
 
 VAE_AUTO_STOP:
   VAE_AUTO_STOP: true
