@@ -1,0 +1,222 @@
+{
+  "model": "models/dqn/jetracer_final.zip",
+  "model_sha256": "0c5633d8024c3ea988c56cce8f9ef9e3cb13840c582815a9f56f9000e88e40db",
+  "model_num_timesteps": 10000,
+  "episodes_per_condition": 100,
+  "policy": "greedy, deterministic=True",
+  "seeds": {
+    "standard": 20000,
+    "challenging": 30000,
+    "robustness": 40000
+  },
+  "simulator_config": {
+    "straight_length": 1.0,
+    "corner_radius": 0.72,
+    "lane_half_width": 0.13,
+    "n_points": 400,
+    "dt": 0.05,
+    "speed": 0.6,
+    "wheelbase": 0.15,
+    "max_steer": 0.4,
+    "car_width": 0.17,
+    "car_front_overhang": 0.025,
+    "car_rear_overhang": 0.025,
+    "footprint_collision": true,
+    "footprint_samples": 5,
+    "max_steps": 1000,
+    "start_offset_frac": 0.3,
+    "start_heading_noise": 0.2,
+    "random_start_along_track": true,
+    "progress_weight": 1.0,
+    "centre_weight": 0.1,
+    "crash_penalty": -10.0,
+    "pixels_per_metre": 120,
+    "fps": 20
+  },
+  "conditions": {
+    "standard": "simulator reset(): random place, offset <= 0.3 x half-width, heading <= 0.2 rad",
+    "challenging": "outer 20% of both start ranges, body inside the lane (0 of 100 episodes fell back to a plain start)",
+    "robustness_noise": "EXTRA: sigma 0.01 Gaussian noise on offset and heading observations",
+    "robustness_delay": "EXTRA: chosen action applied one step (50 ms) late"
+  },
+  "results": {
+    "standard": {
+      "dqn": {
+        "episodes": 100,
+        "mean_reward": -4.420572271917005,
+        "mean_laps_completed": 0.0,
+        "mean_laps_fractional": 0.028138241294435425,
+        "pct_ge_1_lap": 0.0,
+        "pct_ge_3_laps": 0.0,
+        "pct_crashed_off_track": 100.0,
+        "pct_survived_to_timeout": 0.0,
+        "mean_abs_lane_offset_cm": 1.6009823025365986,
+        "mean_abs_heading_error_deg": 8.138600944033948,
+        "mean_episode_length_steps": 6.12,
+        "action_share_pct": {
+          "left": 42.97385620915033,
+          "straight": 0.0,
+          "right": 57.02614379084967
+        },
+        "min_body_clearance_mm_over_all_episodes": -22.09281258664289
+      },
+      "baseline": {
+        "episodes": 100,
+        "mean_reward": 1074.4712496208388,
+        "mean_laps_completed": 4.0,
+        "mean_laps_fractional": 4.526827256480477,
+        "pct_ge_1_lap": 100.0,
+        "pct_ge_3_laps": 100.0,
+        "pct_crashed_off_track": 0.0,
+        "pct_survived_to_timeout": 100.0,
+        "mean_abs_lane_offset_cm": 1.2930712976900767,
+        "mean_abs_heading_error_deg": 1.6524056091605757,
+        "mean_episode_length_steps": 1000.0,
+        "action_share_pct": {
+          "left": 34.922,
+          "straight": 63.814,
+          "right": 1.264
+        },
+        "min_body_clearance_mm_over_all_episodes": 2.2360789814617754
+      }
+    },
+    "challenging": {
+      "dqn": {
+        "episodes": 100,
+        "mean_reward": -3.3832409327371895,
+        "mean_laps_completed": 0.0,
+        "mean_laps_fractional": 0.032519290654059126,
+        "pct_ge_1_lap": 0.0,
+        "pct_ge_3_laps": 0.0,
+        "pct_crashed_off_track": 100.0,
+        "pct_survived_to_timeout": 0.0,
+        "mean_abs_lane_offset_cm": 2.168610772854006,
+        "mean_abs_heading_error_deg": 7.991810112172309,
+        "mean_episode_length_steps": 7.14,
+        "action_share_pct": {
+          "left": 47.19887955182073,
+          "straight": 0.0,
+          "right": 52.80112044817927
+        },
+        "min_body_clearance_mm_over_all_episodes": -20.041734304659443
+      },
+      "baseline": {
+        "episodes": 100,
+        "mean_reward": 1074.3808841315447,
+        "mean_laps_completed": 4.0,
+        "mean_laps_fractional": 4.526613061521061,
+        "pct_ge_1_lap": 100.0,
+        "pct_ge_3_laps": 100.0,
+        "pct_crashed_off_track": 0.0,
+        "pct_survived_to_timeout": 100.0,
+        "mean_abs_lane_offset_cm": 1.2987634759231406,
+        "mean_abs_heading_error_deg": 1.661382627664322,
+        "mean_episode_length_steps": 1000.0,
+        "action_share_pct": {
+          "left": 34.864,
+          "straight": 63.887,
+          "right": 1.249
+        },
+        "min_body_clearance_mm_over_all_episodes": 3.200109593589129
+      }
+    },
+    "robustness_noise": {
+      "dqn": {
+        "episodes": 100,
+        "mean_reward": -3.768717761629603,
+        "mean_laps_completed": 0.0,
+        "mean_laps_fractional": 0.030909263349673824,
+        "pct_ge_1_lap": 0.0,
+        "pct_ge_3_laps": 0.0,
+        "pct_crashed_off_track": 100.0,
+        "pct_survived_to_timeout": 0.0,
+        "mean_abs_lane_offset_cm": 1.5471529574125298,
+        "mean_abs_heading_error_deg": 7.748670867422266,
+        "mean_episode_length_steps": 6.72,
+        "action_share_pct": {
+          "left": 44.04761904761905,
+          "straight": 0.0,
+          "right": 55.95238095238095
+        },
+        "min_body_clearance_mm_over_all_episodes": -21.94557940807909
+      },
+      "baseline": {
+        "episodes": 100,
+        "mean_reward": 98.98411779041477,
+        "mean_laps_completed": 0.13,
+        "mean_laps_fractional": 0.46332333427696987,
+        "pct_ge_1_lap": 12.0,
+        "pct_ge_3_laps": 0.0,
+        "pct_crashed_off_track": 100.0,
+        "pct_survived_to_timeout": 0.0,
+        "mean_abs_lane_offset_cm": 1.1968906670424877,
+        "mean_abs_heading_error_deg": 2.321508848120979,
+        "mean_episode_length_steps": 102.19,
+        "action_share_pct": {
+          "left": 38.83941677267834,
+          "straight": 54.26166943927977,
+          "right": 6.898913788041883
+        },
+        "min_body_clearance_mm_over_all_episodes": -8.491354219659076
+      }
+    },
+    "robustness_delay": {
+      "dqn": {
+        "episodes": 100,
+        "mean_reward": -4.8828673297610345,
+        "mean_laps_completed": 0.0,
+        "mean_laps_fractional": 0.026163335646543214,
+        "pct_ge_1_lap": 0.0,
+        "pct_ge_3_laps": 0.0,
+        "pct_crashed_off_track": 100.0,
+        "pct_survived_to_timeout": 0.0,
+        "mean_abs_lane_offset_cm": 1.5472282069311905,
+        "mean_abs_heading_error_deg": 7.765565615124859,
+        "mean_episode_length_steps": 5.69,
+        "action_share_pct": {
+          "left": 32.161687170474515,
+          "straight": 17.57469244288225,
+          "right": 50.26362038664323
+        },
+        "min_body_clearance_mm_over_all_episodes": -22.628696553613104
+      },
+      "baseline": {
+        "episodes": 100,
+        "mean_reward": 24.881812991189108,
+        "mean_laps_completed": 0.0,
+        "mean_laps_fractional": 0.15127528831965942,
+        "pct_ge_1_lap": 0.0,
+        "pct_ge_3_laps": 0.0,
+        "pct_crashed_off_track": 100.0,
+        "pct_survived_to_timeout": 0.0,
+        "mean_abs_lane_offset_cm": 1.242454472989914,
+        "mean_abs_heading_error_deg": 4.735843605591775,
+        "mean_episode_length_steps": 33.29,
+        "action_share_pct": {
+          "left": 36.76779813757885,
+          "straight": 51.12646440372484,
+          "right": 12.105737458696305
+        },
+        "min_body_clearance_mm_over_all_episodes": -10.075728266057293
+      }
+    }
+  },
+  "verdict": [
+    "In the simulator as defined: NOT good enough (standard 100% crashes, challenging 100%, >=3 laps in 0% of standard episodes).",
+    "Robustness probes: obs noise sigma 0.01 -> 100% crashes; one step of action delay -> 100% crashes. The policy is BRITTLE to small imperfections a real car has.",
+    "VERDICT: NOT ready for unsupervised or confident real-world testing; train with noise/delay/steering randomisation first and complete camera calibration.",
+    "Caveat: success in simulation does not guarantee sim-to-real transfer. The simulator has exact state, no latency, no steering/servo error, no wheel slip and a constant 0.6 m/s; the real car has a camera-based state estimate that is not yet calibrated or validated."
+  ],
+  "representative_episodes": {
+    "success_seed": null,
+    "failure": {
+      "seed": 20000,
+      "condition": "standard"
+    }
+  },
+  "gif": {
+    "frames": 3,
+    "steps_simulated": 4,
+    "seed": 20000
+  }
+}

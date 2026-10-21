@@ -3,11 +3,11 @@
 Nothing below drives the car. The Jetson only runs the camera web page. All calibration maths runs on the LAPTOP.
 Assumptions to change if wrong: repo on the Jetson is `~/seth-jetracer`, Jetson user is `jetson`, laptop repo is the folder below.
 
-Laptop repo: `/Users/seth/reinforcement-learning/jetracer-at3-final/AutonomousDriving-`
+Laptop repo: your clone of this repository (`<repo root>` below)
 
 ## 0. Before leaving (laptop, 1 min)
 ```
-cd /Users/seth/reinforcement-learning/jetracer-at3-final/AutonomousDriving-
+cd <repo root>
 venv/bin/python -m pytest -q tests/test_calibration_workflow.py     # expect: 6 passed
 git status --short car perception tests docs                        # your changes are all uncommitted; commit/copy to the Jetson as you wish
 ```
@@ -55,7 +55,7 @@ by the same amount and use those distances in step 5. Label `strips` (3 photos).
 
 ## 4. Copy the photos to the laptop
 ```
-cd /Users/seth/reinforcement-learning/jetracer-at3-final/AutonomousDriving-
+cd <repo root>
 scp -r jetson@<car-ip>:~/seth-jetracer/data/calib data/calib
 ls data/calib | head -50
 ```
@@ -79,7 +79,7 @@ EOF
 
 ## 5. Build CAL.json (laptop; every command writes a NEW file, replace R and the file names)
 ```
-cd /Users/seth/reinforcement-learning/jetracer-at3-final/AutonomousDriving-
+cd <repo root>
 D=perception/calibration/day1
 venv/bin/python perception/calibrate.py set perception/calibration/initial_fit_from_recordings.json --out $D/c1.json \
     --param camera_forward_of_rear_axle_m --value R --status measured --note "ruler: rear axle centre to lens"
@@ -112,3 +112,19 @@ Do not edit the numbers to make it pass: record the result, and if it fails, re-
 * Lens distortion (not modelled; wide-angle). Errors growing toward the image edges mean a checkerboard calibration is needed.
 * Bends (heading bias ~0.1 rad structural). Only straights are validated here.
 * Nothing here sets the steering map, throttle, or touches the DQN. `drive_dqn.py --enable-motors` still needs a measured steering map.
+
+## 7. Calibrated offline DQN check on the recorded frames (after step 6 passed)
+`car/camera_test_dqn.py` now needs the finished calibration and uses the same estimator as `car/drive_dqn.py`. It refuses an incomplete file.
+```
+cd <repo root>
+D=perception/calibration/day1
+# the 46-frame stratified sample, with annotated images
+venv/bin/python car/camera_test_dqn.py --calibration $D/CAL.json \
+    $(tail -n +2 results/camera_dqn_test/selected_categories.csv | cut -d, -f1) \
+    --categories results/camera_dqn_test/selected_categories.csv --out results/camera_dqn_calibrated/sample
+# all 849 recorded frames, statistics only
+venv/bin/python car/camera_test_dqn.py --calibration $D/CAL.json data/2026*/*.jpg --no-annotated --out results/camera_dqn_calibrated/all_frames
+```
+Read `summary.json` (status counts, estimated offset/heading ranges, action mix) and `predictions.csv` (`est_offset_m`, `est_heading_rad`, `confidence`,
+`reject_reason`). Plausibility checks, not accuracy: offsets inside about +-13 cm, headings near 0 on straights, and an action mix that is no longer
+almost all LEFT. Only the known-pose photos from step 6 can validate accuracy. `results/camera_dqn_test/` holds the earlier, provisional run.

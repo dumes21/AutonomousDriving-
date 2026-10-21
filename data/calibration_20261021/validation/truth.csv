@@ -1,0 +1,3 @@
+# image,offset_cm,yaw_deg  (+ = car LEFT / pointing LEFT)
+offset_left_2p5cm.jpg,+2.5,0
+offset_right_2p5cm.jpg,-2.5,0

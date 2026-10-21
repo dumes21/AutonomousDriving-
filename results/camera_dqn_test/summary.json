@@ -1,0 +1,94 @@
+{
+  "model": "experiments/dqn/20261020_151620_footprint_v1/final.zip",
+  "observation_calibrated": false,
+  "observation_note": "offset_norm and heading_slope/pi are image-space proxies; NOT the simulator's metric offset / heading error",
+  "previous_steering": "0.0 for every image",
+  "images": 46,
+  "accepted_for_dqn": 36,
+  "accepted_pct": 78.26086956521739,
+  "min_confidence": 0.5,
+  "detector_status_counts": {
+    "ok": 41,
+    "insufficient": 2,
+    "one_line": 3
+  },
+  "confidence_accepted": {
+    "min": 0.546,
+    "median": 0.6905,
+    "max": 0.84
+  },
+  "obs_offset_accepted": {
+    "min": -0.9079079031944275,
+    "median": 0.14308110624551773,
+    "max": 0.7947713732719421
+  },
+  "obs_heading_accepted": {
+    "min": -0.37491410970687866,
+    "median": -0.1332804225385189,
+    "max": 0.21315394341945648
+  },
+  "pct_accepted_heading_beyond_training_start_range": 69.44444444444444,
+  "training_start_heading_norm_limit": 0.06366197723675814,
+  "pct_accepted_heading_clipped": 0.0,
+  "action_counts": {
+    "LEFT": 29,
+    "STRAIGHT": 5,
+    "RIGHT": 2
+  },
+  "by_category": {
+    "approach_corner": {
+      "images": 6,
+      "accepted": 6,
+      "action_counts": {
+        "LEFT": 6,
+        "STRAIGHT": 0,
+        "RIGHT": 0
+      }
+    },
+    "difficult_marginal": {
+      "images": 6,
+      "accepted": 6,
+      "action_counts": {
+        "LEFT": 5,
+        "STRAIGHT": 1,
+        "RIGHT": 0
+      }
+    },
+    "difficult_rejected": {
+      "images": 10,
+      "accepted": 0,
+      "action_counts": {
+        "LEFT": 0,
+        "STRAIGHT": 0,
+        "RIGHT": 0
+      }
+    },
+    "mid_corner": {
+      "images": 8,
+      "accepted": 8,
+      "action_counts": {
+        "LEFT": 8,
+        "STRAIGHT": 0,
+        "RIGHT": 0
+      }
+    },
+    "off_centre": {
+      "images": 8,
+      "accepted": 8,
+      "action_counts": {
+        "LEFT": 3,
+        "STRAIGHT": 4,
+        "RIGHT": 1
+      }
+    },
+    "straight": {
+      "images": 8,
+      "accepted": 8,
+      "action_counts": {
+        "LEFT": 7,
+        "STRAIGHT": 0,
+        "RIGHT": 1
+      }
+    }
+  }
+}

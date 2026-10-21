@@ -1,0 +1,46 @@
+{
+  "lane_width_m": 0.26,
+  "image_size": [
+    320,
+    240
+  ],
+  "axis_ref_row": 140.0,
+  "parameters": {
+    "horizon_row_px": {
+      "value": 45.1916892722294,
+      "status": "fitted",
+      "meaning": "image row y_h of the horizon in the pinhole ground model",
+      "note": "fitted from 651 valid frames (5245 rows, 5228 after clipping); width residual rms 24.2 px; flat ground, no distortion"
+    },
+    "camera_height_eff_m": {
+      "value": 0.12389908420366602,
+      "status": "fitted",
+      "meaning": "k: effective camera height (height / cos(pitch)), metres",
+      "note": "fitted from 651 valid frames (5245 rows, 5228 after clipping); width residual rms 24.2 px; flat ground, no distortion"
+    },
+    "depth_scale_F": {
+      "value": null,
+      "status": "unset",
+      "meaning": "F = focal length (px) x k: converts rows to forward distance, metre*pixel",
+      "note": ""
+    },
+    "axis_x_ref_px": {
+      "value": null,
+      "status": "unset",
+      "meaning": "image column of the vehicle's forward axis at row `axis_ref_row`",
+      "note": ""
+    },
+    "axis_slope": {
+      "value": null,
+      "status": "unset",
+      "meaning": "d(column)/d(row) of the vehicle's forward axis line in the image (0 = vertical)",
+      "note": ""
+    },
+    "camera_forward_of_rear_axle_m": {
+      "value": 0.16,
+      "status": "measured",
+      "meaning": "distance from the rear-axle centre forward to the camera lens, metres",
+      "note": "ruler: horizontal distance rear-axle centre to camera lens (user measurement 2026-10-21)"
+    }
+  }
+}

@@ -18,6 +18,7 @@ With an empty or incomplete calibration every frame is UNCALIBRATED -> STOP: tha
 import argparse
 import csv
 import glob
+import math
 import os
 import signal
 import sys
@@ -168,7 +169,10 @@ def main():
             counts[cmd.label] = counts.get(cmd.label, 0) + 1
             est = cmd.estimate
             obs = cmd.observation
-            print("%4d  %-8s %-12s %s" % (step, cmd.label, cmd.status, cmd.reason[:90]))
+            tele = "" if est is None else "conf %.2f" % est.confidence          # live readout (print only; no logic)
+            if est is not None and est.offset_m is not None:
+                tele += "  offset %+6.1f cm  heading %+6.1f deg" % (100.0 * est.offset_m, math.degrees(est.heading_rad))
+            print("%4d  %-8s %-17s %-46s %s" % (step, cmd.label, cmd.status, tele, cmd.reason[:60]))
             if log is not None:
                 log.writerow(["%.3f" % (now - (t0 if camera is not None else 0.0)), cmd.status, cmd.label, cmd.reason[:200],
                               "" if est is None or est.offset_m is None else "%.4f" % est.offset_m,
