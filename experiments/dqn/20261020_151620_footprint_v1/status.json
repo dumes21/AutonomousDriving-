@@ -1,0 +1,7 @@
+{
+  "stopped_by": "time_budget",
+  "elapsed_s": 1200.0,
+  "timesteps": 5677897,
+  "episodes": 28622,
+  "crashes": 27699
+}

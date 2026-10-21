@@ -1,0 +1,29 @@
+{
+  "model": "/Users/seth/reinforcement-learning/jetracer-at3-final/AutonomousDriving-/experiments/dqn/20261020_151620_footprint_v1/final.zip",
+  "seeds": [
+    1000,
+    1019
+  ],
+  "summary": {
+    "dqn": {
+      "mean reward": 1096.167507714755,
+      "mean progress (m)": 29.99306679556661,
+      "mean laps": 4.597418268398205,
+      ">=1 full lap (%)": 100.0,
+      "off-track / crash (%)": 0.0,
+      "survived to timeout (%)": 100.0,
+      "mean |lane offset| (m)": 0.004681801112038036,
+      "mean duration (s)": 50.0
+    },
+    "centre": {
+      "mean reward": 1074.4610142081476,
+      "mean progress (m)": 29.53234590496034,
+      "mean laps": 4.526797726206133,
+      ">=1 full lap (%)": 100.0,
+      "off-track / crash (%)": 0.0,
+      "survived to timeout (%)": 100.0,
+      "mean |lane offset| (m)": 0.012935670744355907,
+      "mean duration (s)": 50.0
+    }
+  }
+}
