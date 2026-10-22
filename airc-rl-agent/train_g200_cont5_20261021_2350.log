@@ -1,0 +1,90 @@
+WARNING: Carrier board is not from a Jetson Developer Kit.
+WARNNIG: Jetson.GPIO library has not been verified with this carrier board,
+WARNING: and in fact is unlikely to work correctly.
+2026-10-21 23:50:19,767 - learning_racer.racer - INFO - Start learning racer :1.7.1
+2026-10-21 23:50:19,767 - learning_racer.commands.subcommand - INFO - Start training
+GST_ARGUS: Creating output stream
+CONSUMER: Waiting until producer is connected...
+GST_ARGUS: Available Sensor modes :
+GST_ARGUS: 3264 x 2464 FR = 21.000000 fps Duration = 47619048 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 3264 x 1848 FR = 28.000001 fps Duration = 35714284 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1920 x 1080 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1640 x 1232 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 59.999999 fps Duration = 16666667 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 120.000005 fps Duration = 8333333 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: Running with following settings:
+   Camera index = 0 
+   Camera mode  = 5 
+   Output Stream W = 1280 H = 720 
+   seconds to Run    = 0 
+   Frame Rate = 120.000005 
+GST_ARGUS: Setup Complete, Starting captures for 0 seconds
+GST_ARGUS: Starting repeat capture requests.
+CONSUMER: Producer has connected; continuing.
+[ WARN:0] global /home/nvidia/host/build_opencv/nv_opencv/modules/videoio/src/cap_gstreamer.cpp (933) open OpenCV | GStreamer warning: Cannot query video position: status=0, value=-1, duration=-1
+/home/jetson/.local/lib/python3.6/site-packages/gym/logger.py:30: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  warnings.warn(colorize('%s: %s'%('WARN', msg % args), 'yellow'))
+STOP
+Wrapping the env in a DummyVecEnv.
+====RESET
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/usr/lib/python3.6/threading.py", line 916, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.6/threading.py", line 864, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.6/dist-packages/jetcam-0.0.0-py3.6.egg/jetcam/camera.py", line 34, in _capture_frames
+    self.value = self._read()
+  File "/usr/local/lib/python3.6/dist-packages/jetcam-0.0.0-py3.6.egg/jetcam/csi_camera.py", line 40, in _read
+    raise RuntimeError('Could not read image from camera')
+RuntimeError: Could not read image from camera
+
+Traceback (most recent call last):
+  File "/home/jetson/.local/bin/racer", line 33, in <module>
+    sys.exit(load_entry_point('learning-racer', 'console_scripts', 'racer')())
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/racer.py", line 71, in racer_func
+    args.handler(args, config)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/commands/subcommand.py", line 93, in command_train
+    model.lean(callback=callback)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/sac/custom_sac.py", line 65, in lean
+    callback=callback)
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/sac/sac.py", line 298, in learn
+    reset_num_timesteps=reset_num_timesteps,
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/off_policy_algorithm.py", line 346, in learn
+    tb_log_name,
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/off_policy_algorithm.py", line 322, in _setup_learn
+    tb_log_name,
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/base_class.py", line 420, in _setup_learn
+    self._last_obs = self.env.reset()  # pytype: disable=annotation-type-mismatch
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/vec_env/dummy_vec_env.py", line 61, in reset
+    obs = self.envs[env_idx].reset()
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/monitor.py", line 79, in reset
+    return self.env.reset(**kwargs)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/agent/interface/base_wrapped_env.py", line 87, in reset
+    z, _ = self.encode_observe(observe)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/agent/interface/base_wrapped_env.py", line 137, in encode_observe
+    z, _, _ = self.vae.encode(t_img.to(self.device))
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/vae/vae.py", line 68, in encode
+    z, mu, logvar = self.bottleneck(h)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/vae/vae.py", line 59, in bottleneck
+    mu, logvar = self.fc1(h), self.fc2(h)  # F.softplus(self.fc2(h))
+  File "/usr/local/lib/python3.6/dist-packages/torch/nn/modules/module.py", line 722, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/usr/local/lib/python3.6/dist-packages/torch/nn/modules/linear.py", line 91, in forward
+    return F.linear(input, self.weight, self.bias)
+  File "/usr/local/lib/python3.6/dist-packages/torch/nn/functional.py", line 1674, in linear
+    ret = torch.addmm(bias, input, weight.t())
+KeyboardInterrupt
+[ WARN:0] global /home/nvidia/host/build_opencv/nv_opencv/modules/videoio/src/cap_gstreamer.cpp (488) isPipelinePlaying OpenCV | GStreamer warning: unable to query pipeline state
+GST_ARGUS: Cleaning up
+Error in atexit._run_exitfuncs:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.6/dist-packages/Adafruit_Blinka-6.10.0-py3.6.egg/adafruit_blinka/microcontroller/tegra/t210/pin.py", line 70, in cleanup
+    @atexit.register
+KeyboardInterrupt
