@@ -1,0 +1,5 @@
+run,steps,seconds,steps_per_s,ended_by
+1,334,11.45,29.2,stop key
+2,311,10.95,28.4,stop key
+3,286,10.34,27.7,stop key
+4,285,9.38,30.4,stop key

@@ -22,7 +22,7 @@ def _load_sac(agent, args, config, policy):
                     )
     else:
         model = SAC.load(args.load_model, env=agent,
-                         policy_kwargs=policy,
+                         # policy_kwargs: use the ones stored in the saved model
                          verbose=config.sac_verbose(),
                          batch_size=config.sac_batch_size(),
                          buffer_size=config.sac_buffer_size(),
