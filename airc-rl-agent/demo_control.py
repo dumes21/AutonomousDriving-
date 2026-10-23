@@ -62,6 +62,7 @@ def main():
     p.add_argument("-device", "--device", default="cuda")
     p.add_argument("--stochastic", action="store_true",
                    help="sample actions like `racer demo` does (default: deterministic, best for evaluation)")
+    p.add_argument("--gui-port", type=int, default=8080, help="live web dashboard port (0 = off)")
     p.add_argument("--max-seconds", type=float, default=0,
                    help="auto-STOP each run after this many seconds (0 = off)")
     args = p.parse_args()
@@ -76,6 +77,7 @@ def main():
     model = SAC.load(args.model_path, device=device)
 
     env = DemoEnv(JetRacerEnv(), vae, config)  # opens the camera and the car
+    env.enable_dashboard(args.gui_port, "DEMO")
 
     def stop_car():
         for _ in range(2):

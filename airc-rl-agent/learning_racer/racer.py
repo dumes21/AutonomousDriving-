@@ -34,6 +34,8 @@ parser_train.add_argument('-l', '--load-model', help='Define pre-train model pat
                           default='', type=str)
 parser_train.add_argument('-log', '--tb-log', help='Define logging directory name, If not set, Do not logging.',
                           default=None, type=str)
+parser_train.add_argument('-gui', '--gui-port', help='Port for the live web dashboard (0 = off).',
+                          default=8080, type=int)
 parser_train.set_defaults(handler=command_train)
 
 # demo subcommand.
@@ -56,6 +58,8 @@ parser_demo.add_argument('-car', '--sim-car', help='Define car model type for ow
                          default='Donkey', type=str)
 parser_demo.add_argument('-log', '--tb-log', help='Define logging directory name, If not set, Do not logging.',
                          default=None, type=str)
+parser_demo.add_argument('-gui', '--gui-port', help='Port for the live web dashboard (0 = off).',
+                         default=8080, type=int)
 parser_demo.set_defaults(handler=command_demo)
 
 

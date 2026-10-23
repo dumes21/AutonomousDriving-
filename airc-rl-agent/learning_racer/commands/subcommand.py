@@ -88,6 +88,7 @@ def command_train(args, config):
                         config.get_env_conf_conf(args.robot_driver))
     wrapped_env = load_wrapped_env(config.get_env_conf_wrapped_env(args.robot_driver),
                                    config.get_env_conf_parts(args.robot_driver), env, vae, config, train=True)
+    wrapped_env.enable_dashboard(getattr(args, 'gui_port', 0), 'TRAINING')
     callback = StableBaselineCallback(wrapped_env)
     model = CustomSAC(callback.wrapped_env, args, config)
     model.lean(callback=callback)
@@ -102,6 +103,7 @@ def command_demo(args, config):
                         config.get_env_conf_conf(args.robot_driver))
     wrapped_env = load_wrapped_env(config.get_env_conf_wrapped_env(args.robot_driver),
                                    config.get_env_conf_parts(args.robot_driver), env, vae, config, train=False)
+    wrapped_env.enable_dashboard(getattr(args, 'gui_port', 0), 'DEMO')
     model = SAC.load(args.model_path)
     obs = wrapped_env.reset()
     for step in range(args.time_steps):

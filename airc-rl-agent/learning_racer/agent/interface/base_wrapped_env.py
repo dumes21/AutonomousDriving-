@@ -31,6 +31,15 @@ class BaseWrappedEnv(Env):
         self.action_space = spaces.Box(low=np.array([config.agent_min_steering(), -1]),
                                        high=np.array([config.agent_max_steering(), 1]), dtype=np.float32)
         self.callbacks = None
+        self.dashboard = None
+        self._dashboard_error_logged = False
+
+    def enable_dashboard(self, port, mode):
+        """Serve the live web dashboard (camera, VAE reconstruction, loss, actions) on port. 0 = off."""
+        from learning_racer.utils.dashboard import start_dashboard
+        steer_max = max(abs(self.config.agent_min_steering()), abs(self.config.agent_max_steering()))
+        throttle_max = max(abs(self.config.agent_min_throttle()), abs(self.config.agent_max_throttle()))
+        self.dashboard = start_dashboard(port, mode, steer_max, throttle_max)
 
     @abstractmethod
     def on_training_end(self) -> None:
@@ -70,6 +79,8 @@ class BaseWrappedEnv(Env):
 
         self._record_action(action)
         z, t_img = self.encode_observe(observe)
+        if self.dashboard is not None and self.dashboard.active():
+            self._publish_dashboard(observe, t_img, z)
         z = torch.squeeze(z.detach()).cpu().numpy()
         observe_action_history = self._concat_action_history(z, self.action_history)
 
@@ -136,6 +147,23 @@ class BaseWrappedEnv(Env):
         t_img = pre_process_image(observe)
         z, _, _ = self.vae.encode(t_img.to(self.device))
         return z, t_img
+
+    def _publish_dashboard(self, observe, t_img, z):
+        """Decode z and send camera, reconstruction, loss and the executed action to the dashboard.
+        Only runs while a browser is watching; any error is logged once and ignored."""
+        try:
+            with torch.no_grad():
+                mu_y, sigma_y = self.vae.decode(z.detach())
+                image = t_img.to(mu_y.device)
+                loss = float(torch.sum(0.5 * (mu_y - image) ** 2 / sigma_y))  # same as vae_viewer.ipynb
+            recon = (mu_y[0].clamp(0, 1).permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+            steering, throttle = self.action_history[-2:]
+            seen = observe[observe.shape[0] // 3:]  # bottom 2/3 = the region the VAE encodes (agent/utils.py crop)
+            self.dashboard.publish(np.ascontiguousarray(seen), recon, loss, steering, throttle)
+        except Exception as e:
+            if not self._dashboard_error_logged:
+                self._dashboard_error_logged = True
+                print("WARNING: dashboard update failed ({}). Training/driving continues.".format(e))
 
 
 class StableBaselineCallback(BaseCallback):
