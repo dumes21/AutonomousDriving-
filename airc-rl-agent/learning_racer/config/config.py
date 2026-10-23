@@ -90,6 +90,9 @@ class ConfigReader:
     def sac_variants_size(self):
         return self.sac.get('VARIANTS_SIZE')
 
+    def sac_net_arch(self):
+        return list(self.sac.get('NET_ARCH', [32, 32]))
+
     def sac_image_channel(self):
         return self.sac.get('IMAGE_CHANNELS')
 

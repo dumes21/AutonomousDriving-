@@ -37,9 +37,10 @@ SAC_SETTING:
   TRAIN_FREQ: 1
   BATCH_SIZE: 64
   GRADIENT_STEPS: 200
-  LEARNING_STARTS: 300
+  LEARNING_STARTS: 700
   BUFFER_SIZE: 30000
   VARIANTS_SIZE: 32
+  NET_ARCH: [32, 32]  # SAC actor/critic hidden layers (new models only; -l keeps the saved model's)
   IMAGE_CHANNELS: 3
   GAMMA: 0.99
   TAU: 0.02
