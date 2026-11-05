@@ -1,0 +1,61 @@
+WARNING: Carrier board is not from a Jetson Developer Kit.
+WARNNIG: Jetson.GPIO library has not been verified with this carrier board,
+WARNING: and in fact is unlikely to work correctly.
+2026-10-21 01:07:25,537 - learning_racer.racer - INFO - Start learning racer :1.7.1
+2026-10-21 01:07:25,537 - learning_racer.commands.subcommand - INFO - Start training
+GST_ARGUS: Creating output stream
+CONSUMER: Waiting until producer is connected...
+GST_ARGUS: Available Sensor modes :
+GST_ARGUS: 3264 x 2464 FR = 21.000000 fps Duration = 47619048 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 3264 x 1848 FR = 28.000001 fps Duration = 35714284 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1920 x 1080 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1640 x 1232 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 59.999999 fps Duration = 16666667 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 120.000005 fps Duration = 8333333 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: Running with following settings:
+   Camera index = 0 
+   Camera mode  = 5 
+   Output Stream W = 1280 H = 720 
+   seconds to Run    = 0 
+   Frame Rate = 120.000005 
+GST_ARGUS: Setup Complete, Starting captures for 0 seconds
+GST_ARGUS: Starting repeat capture requests.
+CONSUMER: Producer has connected; continuing.
+[ WARN:0] global /home/nvidia/host/build_opencv/nv_opencv/modules/videoio/src/cap_gstreamer.cpp (933) open OpenCV | GStreamer warning: Cannot query video position: status=0, value=-1, duration=-1
+/home/jetson/.local/lib/python3.6/site-packages/gym/logger.py:30: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  warnings.warn(colorize('%s: %s'%('WARN', msg % args), 'yellow'))
+STOP
+Traceback (most recent call last):
+  File "/home/jetson/.local/bin/racer", line 33, in <module>
+    sys.exit(load_entry_point('learning-racer', 'console_scripts', 'racer')())
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/racer.py", line 71, in racer_func
+    args.handler(args, config)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/commands/subcommand.py", line 92, in command_train
+    model = CustomSAC(callback.wrapped_env, args, config)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/sac/custom_sac.py", line 46, in __init__
+    self.model = _load_sac(self.agent, self.args, self.config, self.policy)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/sac/custom_sac.py", line 34, in _load_sac
+    sde_sample_freq=config.sac_sde_sample_freq()
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/base_class.py", line 659, in load
+    f"The specified policy kwargs do not equal the stored policy kwargs."
+ValueError: The specified policy kwargs do not equal the stored policy kwargs.Stored kwargs: {'activation_fn': <class 'torch.nn.modules.activation.ReLU'>, 'net_arch': [32, 32], 'use_sde': False}, specified kwargs: {'activation_fn': <class 'torch.nn.modules.activation.ReLU'>, 'net_arch': [32, 32], 'use_sde': True}
+Exception ignored in: <module 'threading' from '/usr/lib/python3.6/threading.py'>
+Traceback (most recent call last):
+  File "/usr/lib/python3.6/threading.py", line 1294, in _shutdown
+    t.join()
+  File "/usr/lib/python3.6/threading.py", line 1056, in join
+    self._wait_for_tstate_lock()
+  File "/usr/lib/python3.6/threading.py", line 1072, in _wait_for_tstate_lock
+    elif lock.acquire(block, timeout):
+KeyboardInterrupt
+CONSUMER: Done Success
+GST_ARGUS: Cleaning up
+GST_ARGUS: Done Success
+Exiting... 
+Cleaning up pins

@@ -1,1 +1,12 @@
 venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+data/
+*.zip
+.env 
+vae_data/
+.claude/
+presentation/presenter_notes.md
+presentation/HOW_TO_RECORD_VIDEO.md

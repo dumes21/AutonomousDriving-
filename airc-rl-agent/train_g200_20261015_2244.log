@@ -1,0 +1,14 @@
+WARNING: Carrier board is not from a Jetson Developer Kit.
+WARNNIG: Jetson.GPIO library has not been verified with this carrier board,
+WARNING: and in fact is unlikely to work correctly.
+2026-10-15 22:45:02,922 - learning_racer.racer - INFO - Start learning racer :1.7.1
+2026-10-15 22:45:02,922 - learning_racer.commands.subcommand - INFO - Start training
+(Argus) Error Timeout:  (propagating from src/rpc/socket/client/SocketClientDispatch.cpp, function openSocketConnection(), line 215)
+(Argus) Error Timeout: Cannot create camera provider (in src/rpc/socket/client/SocketClientDispatch.cpp, function createCameraProvider(), line 102)
+Error generated. /dvs/git/dirty/git-master_linux/multimedia/nvgstreamer/gst-nvarguscamera/gstnvarguscamerasrc.cpp, execute:639 Failed to create CameraProvider
+
+(python3:20207): GStreamer-CRITICAL **: 22:46:55.269: gst_mini_object_set_qdata: assertion 'object != NULL' failed
+[ WARN:0] global /home/nvidia/host/build_opencv/nv_opencv/modules/videoio/src/cap_gstreamer.cpp (933) open OpenCV | GStreamer warning: Cannot query video position: status=0, value=-1, duration=-1
+2026-10-15 22:46:55,270 - learning_racer.commands.subcommand - ERROR - :load_pure_env:Could not initialize camera.  Please see error trace.
+Exiting... 
+Cleaning up pins

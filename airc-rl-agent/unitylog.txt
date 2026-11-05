@@ -1,0 +1,45 @@
+Mono path[0] = 'C:/Users/Owner/Downloads/DonkeySimWin/donkey_sim_Data/Managed'
+Mono config path = 'C:/Users/Owner/Downloads/DonkeySimWin/MonoBleedingEdge/etc'
+Initialize engine version: 2020.3.49f1 (18249dd5551b)
+[Subsystems] Discovering subsystems at path C:/Users/Owner/Downloads/DonkeySimWin/donkey_sim_Data/UnitySubsystems
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce MX450 (ID=0x1f97)
+    Vendor:   
+    VRAM:     1906 MB
+    Driver:   32.0.15.9227
+Begin MonoManager ReloadAssembly
+- Completed reload, in  0.102 seconds
+<RI> Initializing input.
+XInput1_3.dll not found. Trying XInput9_1_0.dll instead...
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 0.718800 ms
+SDSandbox Server starting.
+Server Listening on: 0.0.0.0:9091
+Waiting for a connection...
+SDSandbox Server starting.
+Server Listening on: 0.0.0.0:9092
+Waiting for a connection...
+Setting up 4 worker threads for Enlighten.
+  Thread -> id: 6804 -> priority: 1 
+  Thread -> id: 5d44 -> priority: 1 
+  Thread -> id: 1bec -> priority: 1 
+  Thread -> id: 267c -> priority: 1 
+Waiting for a connection...
+client connected.
+generated_track
+loaded scene
+Unloading 8 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 5.734100 ms
+JustOne removing instance.MainThDisp
+JustOne removing instance.SandboxServer
+loading: racePi2
+JustOne removing instance.SandboxPrivateAPIServer
+Added timer
+car loaded.
+
+Unloading 34 unused Assets to reduce memory usage. Loaded Objects now: 5405.
+Total: 1.698500 ms (FindLiveObjects: 0.227300 ms CreateObjectMapping: 0.126200 ms MarkObjects: 1.283000 ms  DeleteObjects: 0.061500 ms)
+

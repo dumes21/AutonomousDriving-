@@ -1,0 +1,324 @@
+WARNING: Carrier board is not from a Jetson Developer Kit.
+WARNNIG: Jetson.GPIO library has not been verified with this carrier board,
+WARNING: and in fact is unlikely to work correctly.
+2026-10-21 22:25:36,817 - learning_racer.racer - INFO - Start learning racer :1.7.1
+2026-10-21 22:25:36,818 - learning_racer.commands.subcommand - INFO - Start training
+GST_ARGUS: Creating output stream
+CONSUMER: Waiting until producer is connected...
+GST_ARGUS: Available Sensor modes :
+GST_ARGUS: 3264 x 2464 FR = 21.000000 fps Duration = 47619048 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 3264 x 1848 FR = 28.000001 fps Duration = 35714284 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1920 x 1080 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1640 x 1232 FR = 29.999999 fps Duration = 33333334 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 59.999999 fps Duration = 16666667 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: 1280 x 720 FR = 120.000005 fps Duration = 8333333 ; Analog Gain range min 1.000000, max 10.625000; Exposure Range min 13000, max 683709000;
+
+GST_ARGUS: Running with following settings:
+   Camera index = 0 
+   Camera mode  = 5 
+   Output Stream W = 1280 H = 720 
+   seconds to Run    = 0 
+   Frame Rate = 120.000005 
+GST_ARGUS: Setup Complete, Starting captures for 0 seconds
+GST_ARGUS: Starting repeat capture requests.
+CONSUMER: Producer has connected; continuing.
+[ WARN:0] global /home/nvidia/host/build_opencv/nv_opencv/modules/videoio/src/cap_gstreamer.cpp (933) open OpenCV | GStreamer warning: Cannot query video position: status=0, value=-1, duration=-1
+/home/jetson/.local/lib/python3.6/site-packages/gym/logger.py:30: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  warnings.warn(colorize('%s: %s'%('WARN', msg % args), 'yellow'))
+Wrapping the env in a DummyVecEnv.
+====RESET
+2026-10-21 22:27:12.513767: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.10.2
+WARNING:tensorflow:Deprecation warnings have been disabled. Set TF_ENABLE_DEPRECATION_WARNINGS=1 to re-enable them.
+/usr/lib/python3/dist-packages/requests/__init__.py:80: RequestsDependencyWarning: urllib3 (1.26.4) or chardet (3.0.4) doesn't match a supported version!
+  RequestsDependencyWarning)
+Logging to tb_logs/racer_learnig_log_6
+STOP
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 1        |
+|    ep_rew_mean     | -14.7    |
+| time/              |          |
+|    episodes        | 1        |
+|    fps             | 0        |
+|    time_elapsed    | 126      |
+|    total timesteps | 1        |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 2.19     |
+|    ep_rew_mean     | -13.4    |
+| time/              |          |
+|    episodes        | 2        |
+|    fps             | 0        |
+|    time_elapsed    | 139      |
+|    total timesteps | 121      |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 120      |
+|    ep_rew_mean     | 115      |
+| time/              |          |
+|    episodes        | 3        |
+|    fps             | 1        |
+|    time_elapsed    | 174      |
+|    total timesteps | 233      |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 114      |
+|    ep_rew_mean     | 108      |
+| time/              |          |
+|    episodes        | 4        |
+|    fps             | 1        |
+|    time_elapsed    | 190      |
+|    total timesteps | 301      |
+---------------------------------
+STOP
+START
+STOP
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 113      |
+|    ep_rew_mean     | 107      |
+| time/              |          |
+|    episodes        | 5        |
+|    fps             | 1        |
+|    time_elapsed    | 232      |
+|    total timesteps | 302      |
+| train/             |          |
+|    actor_loss      | -23.4    |
+|    critic_loss     | 3.35     |
+|    ent_coef        | 0.0294   |
+|    ent_coef_loss   | 3.86     |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 24200    |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 2.1      |
+|    ep_rew_mean     | -8.84    |
+| time/              |          |
+|    episodes        | 6        |
+|    fps             | 1        |
+|    time_elapsed    | 257      |
+|    total timesteps | 413      |
+| train/             |          |
+|    actor_loss      | -27.3    |
+|    critic_loss     | 9.5      |
+|    ent_coef        | 0.0333   |
+|    ent_coef_loss   | 6.82     |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 24400    |
+---------------------------------
+START
+STOP
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 57.6     |
+|    ep_rew_mean     | 50.1     |
+| time/              |          |
+|    episodes        | 7        |
+|    fps             | 0        |
+|    time_elapsed    | 542      |
+|    total timesteps | 464      |
+| train/             |          |
+|    actor_loss      | -31.3    |
+|    critic_loss     | 4.63     |
+|    ent_coef        | 0.0365   |
+|    ent_coef_loss   | 2.27     |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 24600    |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 76       |
+|    ep_rew_mean     | 68.4     |
+| time/              |          |
+|    episodes        | 8        |
+|    fps             | 0        |
+|    time_elapsed    | 562      |
+|    total timesteps | 501      |
+| train/             |          |
+|    actor_loss      | -30      |
+|    critic_loss     | 3.73     |
+|    ent_coef        | 0.0371   |
+|    ent_coef_loss   | -0.379   |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 24800    |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 54.1     |
+|    ep_rew_mean     | 43.6     |
+| time/              |          |
+|    episodes        | 9        |
+|    fps             | 0        |
+|    time_elapsed    | 587      |
+|    total timesteps | 547      |
+| train/             |          |
+|    actor_loss      | -29.6    |
+|    critic_loss     | 3.72     |
+|    ent_coef        | 0.037    |
+|    ent_coef_loss   | 0.446    |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 25000    |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 42.3     |
+|    ep_rew_mean     | 31.6     |
+| time/              |          |
+|    episodes        | 10       |
+|    fps             | 0        |
+|    time_elapsed    | 605      |
+|    total timesteps | 590      |
+| train/             |          |
+|    actor_loss      | -28.8    |
+|    critic_loss     | 3.79     |
+|    ent_coef        | 0.0375   |
+|    ent_coef_loss   | 0.816    |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 25200    |
+---------------------------------
+START
+STOP
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 44.3     |
+|    ep_rew_mean     | 35.8     |
+| time/              |          |
+|    episodes        | 11       |
+|    fps             | 1        |
+|    time_elapsed    | 623      |
+|    total timesteps | 644      |
+| train/             |          |
+|    actor_loss      | -28.3    |
+|    critic_loss     | 3.79     |
+|    ent_coef        | 0.0385   |
+|    ent_coef_loss   | 1.34     |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 25400    |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 47.3     |
+|    ep_rew_mean     | 39.6     |
+| time/              |          |
+|    episodes        | 12       |
+|    fps             | 1        |
+|    time_elapsed    | 641      |
+|    total timesteps | 682      |
+| train/             |          |
+|    actor_loss      | -27.6    |
+|    critic_loss     | 3.91     |
+|    ent_coef        | 0.0398   |
+|    ent_coef_loss   | 1.42     |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 25600    |
+---------------------------------
+START
+STOP
+====RESET
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 45.1     |
+|    ep_rew_mean     | 37.2     |
+| time/              |          |
+|    episodes        | 13       |
+|    fps             | 1        |
+|    time_elapsed    | 658      |
+|    total timesteps | 724      |
+| train/             |          |
+|    actor_loss      | -27.9    |
+|    critic_loss     | 4.31     |
+|    ent_coef        | 0.0414   |
+|    ent_coef_loss   | 1.82     |
+|    learning_rate   | 0.0003   |
+|    n_updates       | 25800    |
+---------------------------------
+Traceback (most recent call last):
+  File "/home/jetson/.local/bin/racer", line 33, in <module>
+    sys.exit(load_entry_point('learning-racer', 'console_scripts', 'racer')())
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/racer.py", line 71, in racer_func
+    args.handler(args, config)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/commands/subcommand.py", line 93, in command_train
+    model.lean(callback=callback)
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/sac/custom_sac.py", line 65, in lean
+    callback=callback)
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/sac/sac.py", line 298, in learn
+    reset_num_timesteps=reset_num_timesteps,
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/off_policy_algorithm.py", line 359, in learn
+    log_interval=log_interval,
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/off_policy_algorithm.py", line 549, in collect_rollouts
+    callback.on_rollout_start()
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/callbacks.py", line 63, in on_rollout_start
+    self._on_rollout_start()
+  File "/home/jetson/.local/lib/python3.6/site-packages/stable_baselines3/common/callbacks.py", line 186, in _on_rollout_start
+    callback.on_rollout_start()
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/agent/interface/base_wrapped_env.py", line 148, in on_rollout_start
+    self.wrapped_env.on_rollout_start()
+  File "/home/jetson/AutonomousDriving-/airc-rl-agent/learning_racer/agent/teleoperation/teleoperation_env.py", line 56, in on_rollout_start
+    time.sleep(0.1)
+KeyboardInterrupt
+Exception ignored in: <module 'threading' from '/usr/lib/python3.6/threading.py'>
+Traceback (most recent call last):
+  File "/usr/lib/python3.6/threading.py", line 1294, in _shutdown
+    t.join()
+  File "/usr/lib/python3.6/threading.py", line 1056, in join
+    self._wait_for_tstate_lock()
+  File "/usr/lib/python3.6/threading.py", line 1072, in _wait_for_tstate_lock
+    elif lock.acquire(block, timeout):
+KeyboardInterrupt
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/usr/lib/python3.6/threading.py", line 916, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.6/threading.py", line 864, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.6/dist-packages/jetcam-0.0.0-py3.6.egg/jetcam/camera.py", line 34, in _capture_frames
+    self.value = self._read()
+  File "/usr/local/lib/python3.6/dist-packages/jetcam-0.0.0-py3.6.egg/jetcam/csi_camera.py", line 40, in _read
+    raise RuntimeError('Could not read image from camera')
+RuntimeError: Could not read image from camera
+
+GST_ARGUS: Cleaning up
